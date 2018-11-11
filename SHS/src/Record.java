@@ -1,9 +1,11 @@
-import java.sql.Time;
+import java.sql.*;
 import java.util.Date;
+import java.util.Scanner;
 
 public class Record {
     private String patientID;
-    private String appointmentID;
+    private int recordID;
+    private int appointmentID;
     private Time timeOfVisit;
     private Date dayOfVisit;
     private String departmentID;
@@ -22,11 +24,19 @@ public class Record {
         this.patientID = patientID;
     }
 
-    public String getAppointmentID() {
+    public int getRecordID() {
+        return recordID;
+    }
+
+    public void setRecordID(int recordID) {
+        this.recordID = recordID;
+    }
+
+    public int getAppointmentID() {
         return appointmentID;
     }
 
-    public void setAppointmentID(String appointmentID) {
+    public void setAppointmentID(int appointmentID) {
         this.appointmentID = appointmentID;
     }
 
@@ -103,4 +113,43 @@ public class Record {
     }
 
 
+    //prints the record of the patient with patientID
+    void getRecord(String patientID)
+    {
+        try
+        {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem?verifyServerCertificate=false&useSSL=true","rjtmhy","#Rjtmhy25");
+            Statement statement = connection.createStatement();
+            String myQuery;
+
+                myQuery = "select * from record where id = '" + patientID+ "';";
+
+                ResultSet queryResult = statement.executeQuery(myQuery);
+
+                if (queryResult.next()) {
+                    System.out.println("Record:");
+                    recordID = queryResult.getInt("id");
+                    dayOfVisit = queryResult.getDate("dayofvisit");
+                    dayOfDischarge = queryResult.getDate("dayofdischarge");
+                    diseaseIdentified = SHS.csvStringToStringArray(queryResult.getString("diseaseidentified"));
+                    medicinesPrescribed = SHS.csvStringToStringArray(queryResult.getString("medicineprescribed"));
+                    testsAdvised = SHS.csvStringToStringArray(queryResult.getString("testadviced"));
+                    this.patientID = queryResult.getString("patient");
+                    appointmentID = queryResult.getInt("appointment");
+                } else {
+                    System.out.println("Record not found!");
+                }
+        }
+        catch(SQLException e)
+        {
+            System.out.println(e.getMessage());
+        }
+        catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+        }
+    }
+
 }
+
