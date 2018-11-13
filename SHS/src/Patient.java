@@ -3,21 +3,32 @@ import java.io.*;
 import java.util.Date;
 import java.util.Scanner;
 
+
 public class Patient extends Users{
-    public int getPatientId() {
+    private String department;
+    public String getPatientId() {
         return patientId;
     }
 
-    public void setPatientId(int patientId) {
+    public void setPatientId(String patientId) {
         this.patientId = patientId;
     }
 
-    private int patientId;
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    private String patientId;
 
 
     // JDBC driver name and database URL
-    static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-    static final String DB_URL = "jdbc:mysql://gaurav@localhost:3306/SHS";
+    static final String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
+    static final String DB_URL = "jdbc:mysql://gaurav@localhost:3306/SHS?verifyServerCertificate=false&useSSL=true";
 
     //  Database credentials
     static final String DB_USER = "gaurav";
@@ -31,6 +42,7 @@ public class Patient extends Users{
         //String ph="9873372494";
         //p1.viewProfile(ph);
     }
+
 
 
     public void patientRegistration() throws IOException {   //Patient registration is done here. while registering someone it checks if the entry exists in the database or not.
@@ -52,6 +64,22 @@ public class Patient extends Users{
         setPassword(br.readLine());
         System.out.println("Address : ");
         setAddress(br.readLine());
+        SHS.printOptionsList(" Choose the Departments  ",new String[]{"1. General Physician","2.Orthopedics","3.Gynaecology"});
+        int option;
+        String identity=null;
+        option=Integer.parseInt(br.readLine());
+        switch(option)
+        {
+            case 1: identity="GEN";
+            break;
+            case 2: identity="ORTHO";
+            break;
+            case 3: identity="GYNAE";
+            break;
+
+
+        }
+
 
         Connection conn = null;
         Statement stmt = null;
@@ -66,16 +94,33 @@ public class Patient extends Users{
             int i=stmt.executeUpdate(sql);
             if(i==1)
             {
-                System.out.println("Registration Successful");
+
                 //fetching the ID for the user and printing it
-                sql = "SELECT password FROM Patient where phoneNumber='"+getPhoneNumber()+"'";
+                String finIdentity=null;int idNum=0;
+                sql = "SELECT SNO FROM patient where phoneNumber='"+getPhoneNumber()+"'";
                 ResultSet rs = stmt.executeQuery(sql);
                 while (rs.next()) {
-                    int id = rs.getInt("id");
-                    setPatientId(id);
-                    System.out.println("Your Patient_ID is "+id+" ");
+                     idNum = rs.getInt("SNO");
+                     finIdentity = identity + idNum;
+                    setPatientId(finIdentity);
 
                 }
+                //System.out.println(finIdentity);
+                    sql = "UPDATE patient SET id= '"+finIdentity+"' WHERE SNO='"+idNum+"' ";
+                    //UPDATE Users SET weight = 160, desiredWeight = 145 WHERE id = idNum;
+                    int j=stmt.executeUpdate(sql);
+                    if(j==1)
+                    {
+                        System.out.println("Registration Successful");
+                        System.out.println("Your ID is "+finIdentity);
+                    }
+                    else
+                    {
+                        System.out.println("problem writing in database123!!!");
+                    }
+
+
+
             }
 
             else {
@@ -123,13 +168,13 @@ public class Patient extends Users{
     public void patientLogin() throws IOException {
         // takes the input from user and then checks if the credentials are correct or not.
         //if credentials are correct then it calls patientMenu function.
-        int patientId;
+        String patientId;
         String password;
         Scanner sc=new Scanner(System.in);
 
         System.out.println("Please Enter the details below ");
         System.out.println("Patient_ID : ");
-        patientId=Integer.parseInt(br.readLine());
+        patientId=br.readLine();
         System.out.println("Password : ");
         password=br.readLine();
         Connection conn = null;
@@ -196,30 +241,47 @@ public class Patient extends Users{
 
     }
 
-      void patientMenu(int patientId)
-      {
-          Scanner sc=new Scanner(System.in);
-          int operation;
-          System.out.println("<------Patient Menu------>");
-          System.out.println("Please Enter your choice : ");
-          System.out.println("1)View Profile ");
-          System.out.println("2)Edit Profile ");
-          operation=sc.nextInt();
-          switch(operation)
-          {
-              case 1:
-              {
-                viewProfile(patientId);
-              }
-              case 2:
-              {
+      void patientMenu(String patientId) throws IOException, SQLException, ClassNotFoundException {
+        boolean status=true;
+        while(status) {
+            if(status==false)
+            {
+                break;
+            }
+            SHS.printOptionsList("Patient Menu",
+                    new String[]{"1.View Profile", "2.Edit Profile", "3.Book Appointment", "4.View Doctor Details ", "5.View History", "6.Search Doctors", "7.Log out"});
+            System.out.println("Enter an option number:");
+            int operation;
+            operation = Integer.parseInt(br.readLine());
+            switch (operation) {
+                case 1: {
+                    viewProfile(patientId);
+                    break;
+                }
+
+                case 2: {
+                    editProfile(patientId);
+                    break;
+                }
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:{
+                    status=false;
+                    break;
+                }
+                default: {
+                    System.out.println("Wrong Input");
+                    break;
+                }
 
 
-              }
-          }
+            }
 
+        }
       }
-      void viewProfile(int patientId)
+      void viewProfile(String patientId)
       {
           Connection conn = null;
           Statement stmt = null;
@@ -239,8 +301,9 @@ public class Patient extends Users{
               ResultSet rs = stmt.executeQuery(sql);
 
                   while (rs.next()) {
-                      System.out.println("<------Patient Details are as follows------>");
-                      int tempo=rs.getInt("id");
+                      SHS.printOptionsList("Patient Details",
+                              new String[]{""});
+                      String tempo=rs.getString("id");
                       System.out.println("Patient_ID : "+tempo);
                       String temp = rs.getString("name");
                       System.out.print("Name :");
@@ -295,23 +358,123 @@ public class Patient extends Users{
           }
       }
 
+      void editProfile(String patientId) throws IOException, ClassNotFoundException, SQLException {
+          Connection conn = null;
+          Statement stmt = null;
+
+              //Register JDBC driver
+              Class.forName("com.mysql.jdbc.Driver");
+
+              // Open a connection
+              System.out.println("Connecting to database...");
+              conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+              //Execute a query
+              System.out.println("Creating statement...");
+              stmt = conn.createStatement();
+              String sql;
+                SHS.printOptionsList("Enter your choice to Edit",new String[]{"1.Name","2.Email","3.Address"});
+//              System.out.println("Enter your choice to Edit");
+//            System.out.println("1)Name ");
+//            System.out.println("2)Email ");
+//            System.out.println("3)Address");
+            int operation;
+            operation=Integer.parseInt(br.readLine());
+            switch(operation)
+            {
+                case 1:
+                {
+                    System.out.println("Name : ");
+                    String patientName;
+                    patientName=br.readLine();
+                    try {
+                         sql = "UPDATE patient SET name= '" + patientName + "' WHERE id='" + patientId + "' ";
+                        int j=stmt.executeUpdate(sql);
+                        if(j==1)
+                        {
+                            System.out.println("Update Successful");
+                        }
+                        else
+                        {
+                            System.out.println("Update Failed");
+                        }
+                    }
+                    catch(Exception e){
+                        System.out.println(e);
+                    }
+                    break;
+                }
+                case 2:
+                {
+                    System.out.println("Email : ");
+                    String email;
+                    email=br.readLine();
+                    try {
+                        sql = "UPDATE patient SET email= '" +email + "' WHERE id='" + patientId + "' ";
+                        int j=stmt.executeUpdate(sql);
+                        if(j==1)
+                        {
+                            System.out.println("Update Successful");
+                        }
+                        else
+                        {
+                            System.out.println("Update Failed");
+                        }
+                    }
+                    catch(Exception e){
+                        System.out.println(e);
+                    }
+                    break;
+                }
+                case 3:
+                {
+                    System.out.println("Address :");
+                    String address;
+                    address=br.readLine();
+                    try {
+                        sql = "UPDATE patient SET address= '" + address + "' WHERE id='" + patientId + "' ";
+                        int j=stmt.executeUpdate(sql);
+                        if(j==1)
+                        {
+                            System.out.println("Update Successful");
+                        }
+                        else
+                        {
+                            System.out.println("Update Failed");
+                        }
+                    }
+                    catch(Exception e){
+                        System.out.println(e);
+                    }
+                    break;
+                }
+                default :
+                    System.out.println("Wrong Input!!!");
+
+
+            }
+
+
+
+        }
+
 
           // Methods are here take and implement one by one
 
 
-//assignPatientToDoctor(patient:Patient)
-//getAllDetailsOfDoctor()
+//assignPatientToDoctor(patient:Patient) ::appointment
+//getAllDetailsOfDoctor()::display from Doctor
 //searchDoctorBasedOnDepartments()
 //searchDoctorBasedOnID()
 //searchDoctorBasedOnName()
 //searchDoctorBasedOnSpecialisation()
 //searchDoctorBasedOnAddress()
-//selectDoctor()
+//selectDoctor()::doctors from a particular department
 //seeDoctorsProfile()
 //viewDoctorsSchedule()
 //viewDoctorsContactDetails()
 //editProfile()
-//viewHistory()
+//viewHistory()::record table
 //login():done
 //patientRegistration():done(check for existing user or not)
 // viewProfile();:done
