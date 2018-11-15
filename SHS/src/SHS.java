@@ -1,6 +1,9 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class SHS {
 
@@ -41,6 +44,25 @@ public class SHS {
 
     }
 
+    static Connection connection;
+
+    static
+    {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem?verifyServerCertificate=false&useSSL=true", "rjtmhy", "#Rjtmhy25");
+        }
+        catch (SQLException exception)
+        {
+            System.out.println("SQLException"+exception.getMessage());
+        }
+        catch (ClassNotFoundException exception)
+        {
+            System.out.println("ClassNotFoundException"+exception.getMessage());
+        }
+    }
+
+
     public static void main(String[] args)
     {
 
@@ -67,6 +89,7 @@ public class SHS {
                                             administrator.addDoctorInSHS();
                                             break;
                                         case 2://Reassign doctor to patient
+                                            administrator.reassignDoctorToPatient();//ms
                                             break;
                                         case 3://View Patient Details
                                             administrator.veiwPatientDetails();
@@ -105,18 +128,25 @@ public class SHS {
                                     selectedOption = Integer.parseInt(reader.readLine());
                                     switch (selectedOption) {
                                         case 1:// Create a new record
+                                            doctor.createRecord();
                                             break;
                                         case 2:// Treat patient
+                                            doctor.treats();
                                             break;
                                         case 3:// View patient History
+                                            doctor.viewPatientHistory();
                                             break;
                                         case 4://Get list of patients assigned
+                                            doctor.getListOfAssignedPatient();
                                             break;
                                         case 5://Sort list of assigned patients by ID
+                                            doctor.sortListOfAssignedPatientByID();
                                             break;
                                         case 6://Sort list of assigned patients by Name
+                                            doctor.sortListOfAssignedPatientByName();
                                             break;
                                         case 7://Edit profile
+                                            doctor.editProfile();
                                             break;
                                         case 8://Logout
                                             selectedOption = -1;
@@ -146,4 +176,3 @@ public class SHS {
     }
 
 }
-

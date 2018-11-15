@@ -16,7 +16,7 @@ public class Admin {
                 String username = reader.readLine();
                 System.out.println("Enter the password:");
                 String password = reader.readLine();
-                if (username.equalsIgnoreCase("oopd") && password.equalsIgnoreCase("project")) {
+                if (username.equals("oopd") && password.equals("project")) {
                     System.out.println("Login successful!");
                     return true;
                 }
@@ -40,8 +40,8 @@ public class Admin {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             System.out.println(String.format("%90s", "Enter the details of the doctor:"));
             Boolean isRegistrationSuccessful = false;
-            System.out.println("Enter the doctorID:");
-            String doctorID = reader.readLine();
+//            System.out.println("Enter the doctorID:");
+//            String doctorID = reader.readLine();
             System.out.println("Enter the name:");
             String name = reader.readLine();
             System.out.println("Enter the dateOfBirth:");
@@ -77,33 +77,20 @@ public class Admin {
 
             System.out.println("Enter the designation:");
             String designation = reader.readLine();
+            System.out.println("Enter the departmentID:");
+            String departmentID = reader.readLine();
 
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem?verifyServerCertificate=false&useSSL=true", "rjtmhy", "#Rjtmhy25");
-                Statement statement = connection.createStatement();
-                while (!isRegistrationSuccessful) {
-                    String query = "Select id from doctor where id = '" + doctorID + "'";
-                    ResultSet resultSet = statement.executeQuery(query);
-                    if (resultSet.next()) {
-                        System.out.println("DoctorID already exists in the table!");
-                        System.out.println("Enter a new doctorID:");
-                        doctorID = reader.readLine();
-                    } else {
-                        query = "insert into doctor values('" + doctorID + "','" + name + "','" + dateOfBirth + "','" + age + "','" + gender + "','" + phoneNumber + "','" + email + "','" + password + "','"
-                                + address + "','" + schedule + "','" + inTimeOPD + "','" + outTimeOPD + "','" + specialisation + "','" + isSurgeonStatus + "','" + designation + "');";
+                Statement statement = SHS.connection.createStatement();
+
+                     String  query = "insert into doctor values(NULL,'" + name + "','" + dateOfBirth + "','" + age + "','" + gender + "','" + phoneNumber + "','" + email + "','" + password + "','"
+                                + address + "','" + schedule + "','" + inTimeOPD + "','" + outTimeOPD + "','" + specialisation + "','" + isSurgeonStatus + "','" + designation + "','"+departmentID+"');";
                         statement.executeUpdate(query);
-                        isRegistrationSuccessful = true;
-                    }
-                }
 
-                if (isRegistrationSuccessful == true)
                     System.out.println("Doctor successfully registered!");
 
 
         }
          catch (SQLException e) {
-        System.out.println(e.getMessage());
-         } catch (ClassNotFoundException e) {
         System.out.println(e.getMessage());
          }catch (IOException e) {
             System.out.println("Please enter a valid input!" + e.getMessage());
@@ -111,17 +98,80 @@ public class Admin {
 
     }
 
-    public void  reassignDoctorToPatient(String patientID,String doctorID) {
+    //appointment insertion syntax :  insert into appointment values ('11','rajat','1995','2018-10-02','1212','Yes','Fever,Body ache,Restlessness','Delhi','0','1');
+    //reassign a doctor to a patient in the appointment
+    public void  reassignDoctorToPatient() {//ms..tested//As per gaurav I have to ask only with appointmentid
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            String appointmentID="",doctorID="",query="";
+            ResultSet resultSet;
+            Boolean isAppointmentIDValid = false;
+            Boolean isDoctorIDValid = false;
+            Statement statement = SHS.connection.createStatement();
+            while (!(isDoctorIDValid&&isAppointmentIDValid)) {//infinite
+
+
+                if(!isAppointmentIDValid) {
+                    System.out.println("Enter the appointment ID:");
+                    appointmentID = reader.readLine();
+                     query = "Select * from appointment where id = '" + appointmentID + "';";
+                    resultSet = statement.executeQuery(query);
+                    if (resultSet.next())
+                        isAppointmentIDValid = true;
+                }
+
+                 if(!isDoctorIDValid) {
+                     System.out.println("Enter the doctor ID:");
+                     doctorID = reader.readLine();
+                     query = "Select * from doctor  where id = '" + doctorID + "';";
+                     resultSet  = statement.executeQuery(query);
+                     if (resultSet.next())
+                         isDoctorIDValid = true;
+                 }
+
+                 if(!isDoctorIDValid)
+                     System.out.println("incorrect doctorID");
+                 if(!isAppointmentIDValid)
+                    System.out.println("incorrect appointmentID");
+
+                 if(!isDoctorIDValid||!isAppointmentIDValid) {
+                     System.out.println("Do you want to try again. Press Yes/Y/yes try again else press NO/no/N");
+                     String response = reader.readLine();
+                     if (response.equalsIgnoreCase("No") || response.equalsIgnoreCase("N"))
+                         return;
+                 }
+            }
+
+            query = "Select * from appointment where id = '"+appointmentID+"';";
+            resultSet = statement.executeQuery(query);
+            if(resultSet.next())
+            {
+
+                query = "update appointment set doctor = '"+doctorID+"' where id = '"+appointmentID+"';";
+                int rowCount =  statement.executeUpdate(query);
+
+                if(rowCount>=1)
+                {
+                    System.out.println("doctor with id:"+doctorID+" has been assigned to patient with appointment id:"+appointmentID);
+                }
+            }
+            else
+            {
+                System.out.println("There is no appointment for this patient!");
+            }
+        }
+        catch (SQLException e) {
+        System.out.println("SQLException: " + e.getMessage());
+    }  catch (IOException e) {
+        System.out.println("IOException! " + e.getMessage());
+    }
 
     }
 
     public void veiwPatientDetails() {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            Connection connection;
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem?verifyServerCertificate=false&useSSL=true", "rjtmhy", "#Rjtmhy25");
-            Statement statement = connection.createStatement();
+            Statement statement = SHS.connection.createStatement();
             String myQuery;
 
             System.out.println("Enter the patient ID:");
@@ -146,9 +196,7 @@ public class Admin {
 
         } catch (SQLException e) {
             System.out.println("SQLException: " + e.getMessage());
-        } catch (ClassNotFoundException e) {
-            System.out.println("ClassNotFoundException " + e.getMessage());
-        } catch (IOException e) {
+        }catch (IOException e) {
             System.out.println("IOException! " + e.getMessage());
         }
     }
@@ -156,10 +204,7 @@ public class Admin {
     public void viewDoctorDetails() {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            Connection connection;
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem?verifyServerCertificate=false&useSSL=true", "rjtmhy", "#Rjtmhy25");
-            Statement statement = connection.createStatement();
+              Statement statement = SHS.connection.createStatement();
             String myQuery;
 
                 System.out.println("Enter the doctor ID:");
@@ -183,17 +228,16 @@ public class Admin {
                     System.out.println(String.format("%-40s","specialisation of the Doctor:")+String.format("%20s",queryResult.getString(13)));
                     System.out.println(String.format("%-40s","is Surgeon:")+String.format("%20s",queryResult.getBoolean(14)));
                     System.out.println(String.format("%-40s","designation:")+String.format("%20s",queryResult.getString(15)));
+                    System.out.println(String.format("%-40s","department ID:")+String.format("%20s",queryResult.getInt(16)));
+
                 } else {
                     System.out.println("Doctor record not found!");
                 }
 
         } catch (SQLException e) {
             System.out.println("SQLException: " + e.getMessage());
-        } catch (ClassNotFoundException e) {
-            System.out.println("ClassNotFoundException " + e.getMessage());
-        } catch (IOException e) {
+        }  catch (IOException e) {
             System.out.println("IOException! " + e.getMessage());
         }
     }
 }
-

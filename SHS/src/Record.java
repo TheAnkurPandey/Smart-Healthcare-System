@@ -118,9 +118,7 @@ public class Record {
     {
         try
         {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem?verifyServerCertificate=false&useSSL=true","rjtmhy","#Rjtmhy25");
-            Statement statement = connection.createStatement();
+            Statement statement = SHS.connection.createStatement();
             String myQuery;
 
                 myQuery = "select * from record where id = '" + patientID+ "';";
@@ -152,4 +150,3 @@ public class Record {
     }
 
 }
-

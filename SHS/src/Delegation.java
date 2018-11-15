@@ -1,4 +1,3 @@
 public interface Delegation {
-    void referPatient(String doctorsID,String referredDoctorsID,String patientID);
+    void referPatient(int doctorsID,int referredDoctorsID,String patientID);
 }
-
