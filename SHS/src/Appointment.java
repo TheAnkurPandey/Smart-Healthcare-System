@@ -86,6 +86,15 @@ public class Appointment {
     private String doctorID;
     private String departmentID;
     private int tokenNumber;
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
     private String location;
     private boolean isCritical;
     private  String[] symptoms;
@@ -100,7 +109,7 @@ public class Appointment {
     static final String DB_PASS = "Root@123";
 
     BufferedReader br=new BufferedReader(new InputStreamReader(System.in));
-    void createAppointment(String patientId) throws IOException, SQLException, ClassNotFoundException {
+    void createAppointment(int patientId) throws IOException, SQLException, ClassNotFoundException {
 
 
 
@@ -112,7 +121,7 @@ public class Appointment {
         SHS.drawLineSeparator();
         SHS.printOptionsList("Book Appointment: Enter the following Details ",new String[]{"Departments ","1. General Physician","2.Orthopedics","3.Gynaecology"});
         System.out.println("Please choose the department and enter your choice");
-        String identity;int departmentInt=0;
+        String identity=null;int departmentInt=0;
         int choice=Integer.parseInt(br.readLine());
         switch(choice)
         {
@@ -134,17 +143,20 @@ public class Appointment {
         }
         System.out.println("Date of Appointment yyyy-mm-dd");
         String temp=br.readLine();
-         dateOfAppointment=Date.valueOf(temp);
+         Date dateOfAppointment1=Date.valueOf(temp);
+         setDateOfAppointment(dateOfAppointment1);
          this.patientID=patientID;
         System.out.println("Enter your choice"+"\n"+"OPD 1 "+"\n"+"LOCAL 2");
         choice=Integer.parseInt(br.readLine());
         if(choice==1)
         {
-            location="OPD";
+            setLocation("OPD");
+
         }
         else if(choice==2)
         {
-            location="LOCAL";
+            //location="LOCAL";
+            setLocation("LOCAL");
         }
         else
         {
@@ -153,13 +165,16 @@ public class Appointment {
         System.out.println("Enter the symptoms comma seperated");
         temp=br.readLine();
         String temp1=temp;
-        symptoms=temp.split(",");
+        setSymptoms(temp.split(","));
         System.out.println("Patient critical? "+"\n"+"1. yes 2.no");
         choice=Integer.parseInt(br.readLine());
+        String critical=null;
         if(choice==1)
-        {isCritical=true;}
+        {isCritical=true;
+        critical="T";}
         else if(choice==2)
-        {isCritical=false;}
+        {isCritical=false;
+        critical="F";}
         else
         {System.out.println("Wrong input....");}
 
@@ -182,8 +197,9 @@ public class Appointment {
                 sql="SELECT * from doctor WHERE departmentid ='"+departmentInt+"'";
                 ResultSet rs = stmt.executeQuery(sql);
                 System.out.println("Doctor_ID"+"\t"+"Name"+"\t"+"Gender"+"\t"+"Schedule      "+"\t"+"Specialization"+"\t"+"Designation"+"\t"+"Department_ID");
+                int docId=0;
                 while (rs.next()) {
-                    int docId=rs.getInt("id");
+                     docId=rs.getInt("id");
                     String docName=rs.getString("name");
                     String gender=rs.getString("gender");
                     String docSchedule=rs.getString("schedule");
@@ -197,12 +213,59 @@ public class Appointment {
                 System.out.println("Enter the Doctor id ");
                 int finalDocId=Integer.parseInt(br.readLine());
 
-                sql="insert into appointment";
+                 sql="Insert into appointment(patient,doctor,dateofappointment, iscritical,symptoms,location,department,ispatientattended) values('"+patientId+"','"+ finalDocId+"','"+this.dateOfAppointment+"','"+critical+"','"+temp1+"','"+this.location+"','"+departmentInt+"','0')";
+                String sql1="select LAST_INSERT_ID() from appointment;";
+                String finIdentity=null; int idNum=-1;
+                 int i=stmt.executeUpdate(sql,Statement.RETURN_GENERATED_KEYS);
+                if(i==1) {
 
+
+
+
+                    rs = stmt.getGeneratedKeys();
+
+                    if (rs.next()) {
+                        idNum = rs.getInt(1);
+                    } else {
+
+                        // throw an exception from here
+                    }
+
+
+
+
+
+                    System.out.println("success");
+
+                       finIdentity = identity + idNum;
+                        setAppointmentID(finIdentity);
+
+
+
+
+                     sql = "UPDATE appointment SET id= '"+finIdentity+"' WHERE SNO='"+idNum+"' ";
+                    //UPDATE Users SET weight = 160, desiredWeight = 145 WHERE id = idNum;
+                     int j=stmt.executeUpdate(sql);
+                    if(j==1)
+                    {
+                    System.out.println("Appointment Booked Successfully");
+                    System.out.println("Your Appointment_ID is "+finIdentity);
+                      }
+                    else
+                    {
+                        System.out.println("problem writing in database!!!");
+                    }
+
+
+                }
+                    else {
+                    System.out.println("failure");
+
+                        }
             }
             catch (Exception e)
             {
-
+                System.out.println(e);
             }
 
 
