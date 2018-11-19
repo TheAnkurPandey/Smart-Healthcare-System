@@ -1,0 +1,20 @@
+
+Insertion templates:
+insert into department values (NULL,'Orthopaedics','1995');
+insert into patient values('TheChosenOne','Neo','2000-01-25','18','M','0988765432','oracle@matrix.com','goodBOY','LeisureLand Estates');
+insert into record values ('1012','2018-10-23','2018-10-23',
+'Parkinsons','sumox100','MRI,CAT,CT','Aman','123123');
+insert into appointment values ('11','rajat','1995','2018-10-02','1212','Yes','Fever,Body ache,Restlessness','OPD','0','1');
+insert into doctor values('1','Aman','1999-03-20','23','M','9818123456','aman@gmail.com','amanKiAsha','Delhi','Monday,Tuesday','09:00','11:00','alpha','1','Senior Doctor','1');
+
+
+Designation of a doctor can be JuniorDoctor,SeniorDoctor,Specialist,SeniorSpecialist.
+
+Assumptions:
+Only certain fields are editable in the profile namely: name,address and phone number.
+When asked an question user always returns Yes/Y/yes for confirmation.
+
+
+
+What about?
+iscritical,local and HOD??
