@@ -71,7 +71,7 @@ public class SHS {
         int selectedOption = 0;
         while(choice != -1) {
             try {
-                SHS.printOptionsList("Select the account type:",new String[]{"For Administrator: Press 1 ","For Patient : Press 2  ","For Doctor : Press 3","\n To exit from the software : Press -1"});
+                SHS.printOptionsList("Select the account type:",new String[]{"For Administrator : Press 1 ","For Patient : Press 2  ","For Doctor : Press 3","\n To exit from the software : Press -1"});
                 choice = Integer.parseInt(reader.readLine());
                 switch(choice)
                 {
@@ -81,7 +81,7 @@ public class SHS {
                                 selectedOption = 0;
                                 while (selectedOption != -1) {
                                     SHS.printOptionsList("Administrator Account Options",
-                                            new String[]{"1.Add Doctor", "2.Reassign doctor to patient","3.View Patient Details","4.View Doctor Details","5.Log out"});
+                                            new String[]{"1.Add Doctor", "2.Reassign doctor to patient","3.View Patient Details","4.View Doctor Details","5. Add Department","6. View Departments","7.Log out"});
                                     System.out.println("Enter an option number:");
                                     selectedOption = Integer.parseInt(reader.readLine());
                                     switch (selectedOption) {
@@ -97,7 +97,14 @@ public class SHS {
                                         case 4://View Doctor Details
                                             administrator.viewDoctorDetails();
                                             break;
-                                        case 5://logout
+                                        case 5:Department dept=new Department();
+                                                dept.addDepartment();
+                                            break;
+                                        case 6:
+                                            Department dept1=new Department();
+                                            dept1.showDepartments();
+                                            break;
+                                        case 7://logout
                                             selectedOption = -1;
                                             break;
                                         default:
@@ -113,7 +120,23 @@ public class SHS {
                         break;
                      // Patient options
                     case 2: Patient patient = new Patient();
+                        System.out.println("For Registration : Press 1");
+                        System.out.println("For Login : Press 2");
+                         choice=Integer.parseInt(reader.readLine());
+                        if(choice==1)
+                        {
+                            patient.patientRegistration();
+                        }
+                        else if(choice==2)
+                        {
                             patient.patientLogin();
+                        }
+                        else
+                        {
+                            System.out.println("Wrong Input !!!");
+                        }
+
+
                         break;
                      //Doctor options
                     case 3: Doctor doctor = new Doctor();

@@ -85,9 +85,9 @@ public class Patient extends Users{
         Statement stmt = null;
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            System.out.println("Connecting to database...");
+          //  System.out.println("Connecting to database...");
             conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-            System.out.println("Creating statement...");
+            //System.out.println("Creating statement...");
             stmt = conn.createStatement();
             String sql;
             sql = "Insert into patient(name,dateofbirth,age,gender,phonenumber,email,password,address) values('" + this.getName() + "','" + this.getDateOfBirth() + "','" + this.getAge() + "','"+this.getGender()+"','"+this.getPhoneNumber()+"','"+this.getEmail()+"','"+this.getPassword()+"','"+this.getAddress()+"')";
@@ -116,7 +116,8 @@ public class Patient extends Users{
                     }
 //                    else
 //                    {
-//                        System.out.println("problem writing in database123!!!");
+//
+//       System.out.println("problem writing in database123!!!");
 //                    }
 
 
@@ -182,19 +183,19 @@ public class Patient extends Users{
         try {
 
             Class.forName("com.mysql.jdbc.Driver");
-            System.out.println("Connecting to database...");
+         //   System.out.println("Connecting to database...");
             conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-            System.out.println("Creating statement...");
+           // System.out.println("Creating statement...");
             stmt = conn.createStatement();
             String sql;
-            System.out.println(patientId);
+            //System.out.println(patientId);
             sql = "SELECT password FROM patient where id='"+patientId+"'";
             ResultSet rs = stmt.executeQuery(sql);
             boolean status=false;
                 while (rs.next()) {
                     status=true;
                     String id = rs.getString("password");
-                     System.out.println(id);
+                     //System.out.println(id);
                     if (id.equals(password)) {
                         System.out.println("login successful!!!");
                         patientMenu(patientId);
@@ -271,6 +272,8 @@ public class Patient extends Users{
                     viewDoctorDetails();
                     break;
                 case 5:
+                    viewHistory(patientId);
+                    break;
                 case 6:
                     searchDoctor();
                     break;
@@ -288,6 +291,61 @@ public class Patient extends Users{
 
         }
       }
+      void viewHistory(int patientId)
+      {
+          Connection conn = null;
+          Statement stmt = null;
+          try {
+              Class.forName("com.mysql.jdbc.Driver");
+           //   System.out.println("Connecting to database...");
+              conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+              BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+              String query = "Select * from record where patient = '" + patientId+ "'";
+              ResultSet resultSet = stmt.executeQuery(query);
+              Boolean isHistoryPresent = false;
+              for (int i = 1;resultSet.next();i++) {
+
+                  System.out.println(String.format("%30s","-"+i+"-"));
+
+                  System.out.println(String.format("%-40s", "record ID:") + String.format("%20s", resultSet.getString(1)));
+                  System.out.println(String.format("%-40s", "day of visit:") + String.format("%20s", resultSet.getDate(2)));
+                  System.out.println(String.format("%-40s", "day of discharge:") + String.format("%20s", resultSet.getDate(3)));
+                  System.out.println(String.format("%-40s", "diseases identified:") + String.format("%20s", resultSet.getString(4)));
+                  System.out.println(String.format("%-40s", "medicine prescribed:") + String.format("%20s", resultSet.getString(5)));
+                  System.out.println(String.format("%-40s", "test adviced:") + String.format("%20s", resultSet.getString(6)));
+                  System.out.println(String.format("%-40s", "patient ID:") + String.format("%20s", resultSet.getString(7)));
+                  System.out.println(String.format("%-40s", "appointment ID:") + String.format("%20s", resultSet.getString(8)));
+                  isHistoryPresent= true;
+              }
+              if(!isHistoryPresent)
+              {
+                  System.out.println("There is no history for the patient with ID:"+patientId);
+              }
+          }
+          catch (SQLException se) {
+              //Handle errors for JDBC
+              se.printStackTrace();
+          } catch (Exception e) {
+              //Handle errors for Class.forName
+              e.printStackTrace();
+          } finally {
+
+              try {
+                  if (stmt != null)
+                      stmt.close();
+              } catch (SQLException se2) {
+              }
+              try {
+                  if (conn != null)
+                      conn.close();
+              } catch (SQLException se) {
+                  se.printStackTrace();
+              }
+          }
+
+          }
       void viewProfile(int patientId)
       {
           Connection conn = null;
@@ -297,11 +355,11 @@ public class Patient extends Users{
               Class.forName("com.mysql.jdbc.Driver");
 
               // Open a connection
-              System.out.println("Connecting to database...");
+           //   System.out.println("Connecting to database...");
               conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 
               //Execute a query
-              System.out.println("Creating statement...");
+             // System.out.println("Creating statement...");
               stmt = conn.createStatement();
               String sql;
               sql = "SELECT * FROM patient where id='"+patientId+"'";
@@ -373,18 +431,15 @@ public class Patient extends Users{
               Class.forName("com.mysql.jdbc.Driver");
 
               // Open a connection
-              System.out.println("Connecting to database...");
+           //   System.out.println("Connecting to database...");
               conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 
               //Execute a query
-              System.out.println("Creating statement...");
+             // System.out.println("Creating statement...");
               stmt = conn.createStatement();
               String sql;
                 SHS.printOptionsList("Enter your choice to Edit",new String[]{"1.Name","2.Email","3.Address"});
-//              System.out.println("Enter your choice to Edit");
-//            System.out.println("1)Name ");
-//            System.out.println("2)Email ");
-//            System.out.println("3)Address");
+
             int operation;
             operation=Integer.parseInt(br.readLine());
             switch(operation)
@@ -478,8 +533,9 @@ public class Patient extends Users{
             //String doctorID = reader.readLine();
             String sql = "select * from doctor ";
             ResultSet queryResult = statement.executeQuery(sql);
-            System.out.println( "Doctor_ID"+"\t"+"Name"+"\t"+"Gender"+"\t"+"DepartmentID");
+
             if(queryResult!=null) {
+                System.out.println( "Doctor_ID"+"\t"+"Name"+"\t"+"Gender"+"\t"+"DepartmentID");
                 while (queryResult.next()) {
                     System.out.print( queryResult.getInt(1)+"\t");
                     System.out.print( queryResult.getString(2)+"\t");
@@ -505,6 +561,7 @@ public class Patient extends Users{
                 queryResult = statement.executeQuery(sql);
 
                 if (queryResult.next()) {
+                    SHS.printOptionsList("Doctor Details",new String[]{});
                     System.out.println(String.format("%-40s","doctorID:")+String.format("%20s",queryResult.getInt(1)));
                     System.out.println(String.format("%-40s","name:")+String.format("%20s",queryResult.getString(2)));
                     System.out.println(String.format("%-40s","dateOfBirth:")+String.format("%20s",queryResult.getDate(3)));
@@ -539,7 +596,7 @@ public class Patient extends Users{
             System.out.println("IOException! " + e.getMessage());
         }
     }
-    public void searchDoctor() throws IOException {
+    public void searchDoctor() throws IOException, SQLException {
         SHS.printOptionsList("Search Doctor : Based On",new String[]{"1.Department","2.ID","3.Name","4.Specialisation","5.Address"});
         System.out.println("Enter the option ");
         int choice=Integer.parseInt(br.readLine());
@@ -560,8 +617,11 @@ public class Patient extends Users{
 
     }
    public void searchDoctorBasedOnDepartments() throws IOException, SQLException {
-       System.out.println("Select the Department");
-       SHS.printOptionsList(" Choose the Departments  ", new String[]{"1. General Physician", "2.Orthopedics", "3.Gynaecology"});
+
+      // SHS.printOptionsList(" Choose the Departments  ", new String[]{""});
+       Department dept=new Department();
+       dept.showDepartments();
+       System.out.println("Enter the DepartmentID");
        int choice = Integer.parseInt(br.readLine());
 
        try {
@@ -572,9 +632,11 @@ public class Patient extends Users{
            Statement statement = connection.createStatement();
            String sql = "select * from doctor where departmentid='" + choice + "' ";
            ResultSet queryResult = statement.executeQuery(sql);
-           System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
-                   "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
-           if(queryResult!=null){
+
+           if (queryResult.isBeforeFirst()) {
+
+               System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
+                       "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
                while (queryResult.next()) {
                    System.out.print(queryResult.getInt(1) + "\t");
                    System.out.print(queryResult.getString(2) + "\t");
@@ -619,9 +681,11 @@ public class Patient extends Users{
             Statement statement = connection.createStatement();
             String sql = "select * from doctor where id='" + choice + "' ";
             ResultSet queryResult = statement.executeQuery(sql);
-            System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
-                    "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
-            if (queryResult != null) {
+
+             if (queryResult.isBeforeFirst()) {
+
+                System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
+                        "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
                 while (queryResult.next()) {
                     System.out.print(queryResult.getInt(1) + "\t");
                     System.out.print(queryResult.getString(2) + "\t");
@@ -648,6 +712,8 @@ public class Patient extends Users{
             }
 
 
+
+
         } catch (SQLException e) {
             System.out.println("SQLException: " + e.getMessage());
         } catch (ClassNotFoundException e) {
@@ -666,9 +732,11 @@ public class Patient extends Users{
             Statement statement = connection.createStatement();
             String sql = "select * from doctor where name='" + name + "' ";
             ResultSet queryResult = statement.executeQuery(sql);
-            System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
-                    "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
-            if (queryResult != null) {
+
+            if (queryResult.isBeforeFirst())  {
+
+                System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
+                        "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
                 while (queryResult.next()) {
                     System.out.print(queryResult.getInt(1) + "\t");
                     System.out.print(queryResult.getString(2) + "\t");
@@ -714,9 +782,10 @@ public class Patient extends Users{
             Statement statement = connection.createStatement();
             String sql = "select * from doctor where specialization='" + specialisation + "' ";
             ResultSet queryResult = statement.executeQuery(sql);
-            System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
-                    "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
-            if (queryResult != null) {
+
+            if (queryResult.isBeforeFirst())  {
+                System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
+                        "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
                 while (queryResult.next()) {
                     System.out.print(queryResult.getInt(1) + "\t");
                     System.out.print(queryResult.getString(2) + "\t");
@@ -761,9 +830,10 @@ public class Patient extends Users{
             Statement statement = connection.createStatement();
             String sql = "select * from doctor where address='" + address + "' ";
             ResultSet queryResult = statement.executeQuery(sql);
-            System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
-                    "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
-            if (queryResult != null) {
+
+            if (queryResult.isBeforeFirst())  {
+                System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
+                        "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
                 while (queryResult.next()) {
                     System.out.print(queryResult.getInt(1) + "\t");
                     System.out.print(queryResult.getString(2) + "\t");

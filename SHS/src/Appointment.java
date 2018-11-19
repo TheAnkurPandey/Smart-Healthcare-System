@@ -3,6 +3,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 
 //import java.util.Date;
 //declare enum
@@ -39,11 +44,11 @@ public class Appointment {
         this.patientID = patientID;
     }
 
-    public String getDoctorID() {
+    public int getDoctorID() {
         return doctorID;
     }
 
-    public void setDoctorID(String doctorID) {
+    public void setDoctorID(int doctorID) {
         this.doctorID = doctorID;
     }
 
@@ -83,7 +88,7 @@ public class Appointment {
     private Boolean patientAttendedAppointment;
     private Date dateOfAppointment;
     private  String patientID;
-    private String doctorID;
+    private int doctorID;
     private String departmentID;
     private int tokenNumber;
 
@@ -107,46 +112,47 @@ public class Appointment {
     //  Database credentials
     static final String DB_USER = "gaurav";
     static final String DB_PASS = "Root@123";
+    Statement stmt=null;
+    Connection conn=null;
 
     BufferedReader br=new BufferedReader(new InputStreamReader(System.in));
     void createAppointment(int patientId) throws IOException, SQLException, ClassNotFoundException {
 
-
-
-
-
-
-
-
-        SHS.drawLineSeparator();
-        SHS.printOptionsList("Book Appointment: Enter the following Details ",new String[]{"Departments ","1. General Physician","2.Orthopedics","3.Gynaecology"});
-        System.out.println("Please choose the department and enter your choice");
-        String identity=null;int departmentInt=0;
+      //  SHS.drawLineSeparator();
+        SHS.printOptionsList("Book Appointment: Enter the following Details ",new String[]{""});
+        Department dept=new Department();
+        dept.showDepartments();
+        System.out.println("Enter DepartmentID :");
         int choice=Integer.parseInt(br.readLine());
-        switch(choice)
-        {
+        String identity=null;
+            int departmentInt=choice;
+        try{
+            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+            stmt = conn.createStatement();
+            String sql="select code from department where id ='"+choice+"'";
+            ResultSet rs = stmt.executeQuery(sql);
+            if (rs.isBeforeFirst() ) {
+                while (rs.next()) {
+                    identity = rs.getString("code");
 
-
-                case 1: identity="GEN";
-                        departmentInt=1;
-                    break;
-                case 2: identity="ORTHO";
-                        departmentInt=2;
-                    break;
-                case 3: identity="GYNAE";
-                        departmentInt=3;
-                    break;
-
-
-
-            //assign departmentId accordingly
+                }
+            }
+            else
+            {
+                System.out.println("No Department Exists with DepartmentID "+choice);
+            }
         }
-        System.out.println("Date of Appointment yyyy-mm-dd");
+        catch(Exception e)
+        {
+            System.out.println(e);
+        }
+
+        System.out.println("Date of Appointment yyyy-mm-dd :");
         String temp=br.readLine();
-         Date dateOfAppointment1=Date.valueOf(temp);
-         setDateOfAppointment(dateOfAppointment1);
-         this.patientID=patientID;
-        System.out.println("Enter your choice"+"\n"+"OPD 1 "+"\n"+"LOCAL 2");
+        Date dateOfAppointment1=Date.valueOf(temp);
+        setDateOfAppointment(dateOfAppointment1);
+        this.patientID=patientID;
+        System.out.println("Enter your choice"+"\n"+"For OPD : Press 1 "+"\n"+"For LOCAL : Press 2");
         choice=Integer.parseInt(br.readLine());
         if(choice==1)
         {
@@ -162,19 +168,19 @@ public class Appointment {
         {
             System.out.println("Wrong input");
         }
-        System.out.println("Enter the symptoms comma seperated");
+        System.out.println("Enter the Symptoms (comma seperated) :");
         temp=br.readLine();
         String temp1=temp;
         setSymptoms(temp.split(","));
-        System.out.println("Patient critical? "+"\n"+"1. yes 2.no");
+        System.out.println("Patient critical? "+"\n"+"For Yes : Press 1"+"\n"+"For No : Press 2");
         choice=Integer.parseInt(br.readLine());
         String critical=null;
         if(choice==1)
         {isCritical=true;
-        critical="T";}
+            critical="T";}
         else if(choice==2)
         {isCritical=false;
-        critical="F";}
+            critical="F";}
         else
         {System.out.println("Wrong input....");}
 
@@ -199,7 +205,7 @@ public class Appointment {
                 System.out.println("Doctor_ID"+"\t"+"Name"+"\t"+"Gender"+"\t"+"Schedule      "+"\t"+"Specialization"+"\t"+"Designation"+"\t"+"Department_ID");
                 int docId=0;
                 while (rs.next()) {
-                     docId=rs.getInt("id");
+                    docId=rs.getInt("id");
                     String docName=rs.getString("name");
                     String gender=rs.getString("gender");
                     String docSchedule=rs.getString("schedule");
@@ -213,10 +219,10 @@ public class Appointment {
                 System.out.println("Enter the Doctor id ");
                 int finalDocId=Integer.parseInt(br.readLine());
 
-                 sql="Insert into appointment(patient,doctor,dateofappointment, iscritical,symptoms,location,department,ispatientattended) values('"+patientId+"','"+ finalDocId+"','"+this.dateOfAppointment+"','"+critical+"','"+temp1+"','"+this.location+"','"+departmentInt+"','0')";
+                sql="Insert into appointment(patient,doctor,dateofappointment, iscritical,symptoms,location,department,ispatientattended) values('"+patientId+"','"+ finalDocId+"','"+this.dateOfAppointment+"','"+critical+"','"+temp1+"','"+this.location+"','"+departmentInt+"','0')";
                 String sql1="select LAST_INSERT_ID() from appointment;";
                 String finIdentity=null; int idNum=-1;
-                 int i=stmt.executeUpdate(sql,Statement.RETURN_GENERATED_KEYS);
+                int i=stmt.executeUpdate(sql,Statement.RETURN_GENERATED_KEYS);
                 if(i==1) {
 
 
@@ -237,20 +243,20 @@ public class Appointment {
 
                     System.out.println("success");
 
-                       finIdentity = identity + idNum;
-                        setAppointmentID(finIdentity);
+                    finIdentity = identity + idNum;
+                    setAppointmentID(finIdentity);
 
 
 
 
-                     sql = "UPDATE appointment SET id= '"+finIdentity+"' WHERE SNO='"+idNum+"' ";
+                    sql = "UPDATE appointment SET id= '"+finIdentity+"' WHERE SNO='"+idNum+"' ";
                     //UPDATE Users SET weight = 160, desiredWeight = 145 WHERE id = idNum;
-                     int j=stmt.executeUpdate(sql);
+                    int j=stmt.executeUpdate(sql);
                     if(j==1)
                     {
-                    System.out.println("Appointment Booked Successfully");
-                    System.out.println("Your Appointment_ID is "+finIdentity);
-                      }
+                        System.out.println("Appointment Booked Successfully");
+                        System.out.println("Your Appointment_ID is "+finIdentity);
+                    }
                     else
                     {
                         System.out.println("problem writing in database!!!");
@@ -258,26 +264,121 @@ public class Appointment {
 
 
                 }
-                    else {
+                else {
                     System.out.println("failure");
 
-                        }
+                }
             }
             catch (Exception e)
             {
                 System.out.println(e);
             }
 
-
-
-
-
-
-
-            }
+      }
         else if(choice==2)
         {
             //intelligent algo to assign doctor
+
+            try {
+
+            //intelligent algo to assign doctor
+            String dayOfWeek = new SimpleDateFormat("EE").format(dateOfAppointment);
+            //System.out.println("dayOfWeek: " + dayOfWeek);
+
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            System.out.println("Connecting to database...");
+            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+            System.out.println("Creating statement...");
+            stmt = conn.createStatement();
+            //System.out.println("departmentID: " + departmentID);
+            String sql = "SELECT * FROM doctor WHERE departmentid = '" + departmentID + "' ";
+            ResultSet rs = stmt.executeQuery(sql);
+            ArrayList<Integer> listOfDoctorsOnThatDay = new ArrayList<>();
+            ArrayList<Long> totalTokenCountOfDoctorOnThatDay = new ArrayList<>();
+
+            while (rs.next()) {
+                if (Arrays.asList(rs.getString("schedule").split(",")).contains(dayOfWeek)) {
+                    listOfDoctorsOnThatDay.add(rs.getInt("id"));
+                    //System.out.println("doctor id: " + rs.getInt("id"));
+                    LocalTime inTime = rs.getTime("intimeopd").toLocalTime();
+                    LocalTime outTime = rs.getTime("outtimeopd").toLocalTime();
+                    long totalTokenCount = Duration.between(inTime, outTime).toMinutes() / 10L;
+                    //System.out.println("totalTokenCount: " + totalTokenCount);
+                    totalTokenCountOfDoctorOnThatDay.add(totalTokenCount);
+
+                }
+            }
+
+            ArrayList<Integer> listOfAvailableDoctorOnThatDay = new ArrayList<>();
+            int newToken;
+            for (int i = 0; i < listOfDoctorsOnThatDay.size(); i++) {
+                sql = "SELECT COUNT(*) AS total FROM appointment WHERE doctor = '" + listOfDoctorsOnThatDay.get(i) + "' ";
+                rs = stmt.executeQuery(sql);
+                rs.next();
+                if (rs.getInt("total") < totalTokenCountOfDoctorOnThatDay.get(i)) {
+                    listOfAvailableDoctorOnThatDay.add(listOfDoctorsOnThatDay.get(i));
+                    newToken=rs.getInt("total")+1;
+
+                    //System.out.println("Added to list of available doctor: " + listOfDoctorsOnThatDay.get(i));
+                }
+
+            }
+
+            ArrayList<String> specialisationOfAvailableDoctorOnThatDay = new ArrayList<>();
+            for (int i = 0; i < listOfAvailableDoctorOnThatDay.size(); i++) {
+                sql = "SELECT specialization FROM doctor WHERE id = '" + listOfAvailableDoctorOnThatDay.get(i) + "' ";
+                rs = stmt.executeQuery(sql);
+                rs.next();
+                specialisationOfAvailableDoctorOnThatDay.add(rs.getString("specialization").toLowerCase());
+                //System.out.println("specialization: " + rs.getString("specialization"));
+            }
+
+            //System.out.println("specialisationOfAvailableDoctorOnThatDay: " + specialisationOfAvailableDoctorOnThatDay.toString());
+
+
+
+            sql = "SELECT * FROM knowledgebase";
+            rs = stmt.executeQuery(sql);
+            HashMap<String, Integer> matches = new HashMap<>();
+            ArrayList<String> specialisationList = new ArrayList<>();
+
+            Arrays.sort(symptoms);
+            while(rs.next()) {
+                String specialisation = rs.getString("specialization");
+                //System.out.println("specialization2: " + specialisation);
+                if (!specialisationOfAvailableDoctorOnThatDay.contains(specialisation.toLowerCase()))
+                    continue;
+                specialisationList.add(specialisation);
+                //System.out.println("Added to the specialisationList");
+                String specialisationSymptomsList[];
+                Arrays.sort(specialisationSymptomsList = rs.getString("symptomsList").split(",") );
+                //System.out.println(specialisationSymptomsList.toString());
+                matches.put(specialisation, getMatchingSymptomsCount(symptoms, specialisationSymptomsList));
+
+            }
+            int indexOfMax = -1;
+            int maxValue = 0;
+            for(int i = 0; i < specialisationList.size(); i++) {
+                if(matches.get(specialisationList.get(i)) > maxValue) {
+                    maxValue = matches.get(specialisationList.get(i));
+                    indexOfMax = i;
+                }
+            }
+
+            if (maxValue == 0) {
+                System.out.println("Go to general physician");
+            }
+            else {
+                System.out.println("doctor id:" + listOfAvailableDoctorOnThatDay.get(
+                        specialisationOfAvailableDoctorOnThatDay.indexOf( specialisationList.get(indexOfMax) )
+                ));
+            }
+
+        }
+        catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
         }
         else
         {
@@ -285,14 +386,17 @@ public class Appointment {
         }
 
 
+    }
 
 
+    private int getMatchingSymptomsCount(String a[], String b[]) {
+        int matchesFound = 0;
 
+        for (int i = 0; i < a.length; i++)
+            for (int j = 0; j < b.length; j++)
+                if (a[i].equalsIgnoreCase(b[j]))
+                    matchesFound ++;
 
-
-
-
-
-
+        return matchesFound;
     }
 }
