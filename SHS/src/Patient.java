@@ -1,3 +1,6 @@
+import Middleware.Logger;
+import Middleware.Validator;
+
 import java.sql.*;
 import java.io.*;
 import java.util.Date;
@@ -47,44 +50,85 @@ public class Patient extends Users{
 
     public void patientRegistration() throws IOException {   //Patient registration is done here. while registering someone it checks if the entry exists in the database or not.
         //Scanner sc=new Scanner(System.in);
+        String validStr;int valid; Date validDate;
         System.out.println("Please Enter the following Information");
         System.out.println("Name :");
-        setName(br.readLine());
-        System.out.println("Date of Birth(YYYY-MM-DD) :");
-        setDateOfBirth(br.readLine());
-        System.out.println("Age : ");
-        setAge(Integer.parseInt(br.readLine()));
-        System.out.println("Gender : ");
-        setGender(br.readLine());
-        System.out.println("Phone Number : ");
-        setPhoneNumber(Long.parseLong(br.readLine()));
-        System.out.println("Email : ");
-        setEmail(br.readLine());
-        System.out.println("Password : ");
-        setPassword(br.readLine());
-        System.out.println("Address : ");
-        setAddress(br.readLine());
-       /* SHS.printOptionsList(" Choose the Departments  ",new String[]{"1. General Physician","2.Orthopedics","3.Gynaecology"});
-        int option;
-        String identity=null;
-        option=Integer.parseInt(br.readLine());
-        switch(option)
+         validStr=br.readLine();
+        if(Validator.isValidFullName(validStr)) {
+            setName(validStr);
+        }
+        else
         {
-            case 1: identity="GEN";
-            break;
-            case 2: identity="ORTHO";
-            break;
-            case 3: identity="GYNAE";
-            break;
-
-
+            System.out.println("Only alphabets are allowed !!!");
+            return;
+        }
+        System.out.println("Date of Birth(YYYY-MM-DD) :");
+        validStr=br.readLine();
+        if(Validator.isValidDate(validStr)){
+        setDateOfBirth(validStr);}
+        else
+        {
+            System.out.println("Enter the Date of Birth correctly");
+            return;
+        }
+        System.out.println("Age : ");
+        validStr=br.readLine();
+        if(Validator.isValidAge(validStr))
+        {setAge(Integer.parseInt(validStr));}
+        else
+        {
+            System.out.println("Invalid Integer Value");
+            return;
+        }
+        System.out.println("Gender M/F: ");
+        validStr=br.readLine();
+        if(Validator.isValidGender(validStr))
+        {
+            setGender(validStr);
+        }
+        else
+        {
+            System.out.println("Please Enter the Valid Gender");
+            return;
+        }
+        System.out.println("Phone Number : ");
+        validStr=br.readLine();
+        if(Validator.isValidPhoneNumber(validStr)) {
+            setPhoneNumber(Long.parseLong(validStr));
+        }
+        else
+        {
+            System.out.println("Invalid Phone Number ");
+            return;
+        }
+        System.out.println("Email : ");
+        validStr=br.readLine();
+        if(Validator.validateEmail(validStr))
+        {
+            setEmail(validStr);
+        }
+        else
+        {
+            System.out.println("Invalid Email ");
+            return;
+        }
+        System.out.println("Password : ");
+        validStr=br.readLine();
+        if(Validator.isValidPassword(validStr))
+        {
+            setPassword(validStr);
+        }
+        else
+        {
+            System.out.println("Incorrect Password Format.");
         }
 
-*/
+        System.out.println("Address : ");
+        setAddress(br.readLine());
         Connection conn = null;
         Statement stmt = null;
         try {
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("com.mysql.cj.jdbc.Driver");
           //  System.out.println("Connecting to database...");
             conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
             //System.out.println("Creating statement...");
@@ -138,11 +182,12 @@ public class Patient extends Users{
         catch(SQLIntegrityConstraintViolationException se)
         {
             System.out.println("User Already Exists with the Phone Number : "+getPhoneNumber()+". Please register with a different Phone Number !!!");
+            Logger.log(se.getMessage());
         }
         catch (SQLException se) {
 
 
-
+            Logger.log(se.getMessage());
             se.printStackTrace();
         } catch (Exception e) {
 
@@ -153,12 +198,14 @@ public class Patient extends Users{
                 if (stmt != null)
                     stmt.close();
             } catch (SQLException se2) {
+                Logger.log(se2.getMessage());
             }
             try {
                 if (conn != null)
                     conn.close();
             } catch (SQLException se) {
                 se.printStackTrace();
+                Logger.log(se.getMessage());
             }
         }
 
@@ -167,6 +214,7 @@ public class Patient extends Users{
 
 
     public void patientLogin() throws IOException {
+        String validStr;
         // takes the input from user and then checks if the credentials are correct or not.
         //if credentials are correct then it calls patientMenu function.
         int patientId;
@@ -175,14 +223,33 @@ public class Patient extends Users{
 
         System.out.println("Please Enter the details below ");
         System.out.println("Patient_ID : ");
-        patientId=Integer.parseInt(br.readLine());
+        validStr=br.readLine();
+        //if(Validator.isItInteger(validStr))
+        //{
+            patientId=Integer.parseInt(validStr);
+        //}
+        //else {
+          //  System.out.println("Invalid Patient ID");
+            //return;
+        //}
+
         System.out.println("Password : ");
-        password=br.readLine();
+        validStr=br.readLine();
+        if(Validator.isValidPassword(validStr))
+        {
+            password = validStr;
+        }
+        else
+        {
+            System.out.println("Wrong Password format");
+            return;
+        }
+
         Connection conn = null;
         Statement stmt = null;
         try {
 
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("com.mysql.cj.jdbc.Driver");
          //   System.out.println("Connecting to database...");
             conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
            // System.out.println("Creating statement...");
@@ -219,9 +286,11 @@ public class Patient extends Users{
         } catch (SQLException se) {
             //Handle errors for JDBC
             se.printStackTrace();
+            Logger.log(se.getMessage());
         } catch (Exception e) {
             //Handle errors for Class.forName
             e.printStackTrace();
+            Logger.log(e.getMessage());
         } finally {
             //finally block used to close resources
             try {
@@ -234,6 +303,7 @@ public class Patient extends Users{
                     conn.close();
             } catch (SQLException se) {
                 se.printStackTrace();
+                Logger.log(se.getMessage());
             }//end finally try
         }
 
@@ -296,7 +366,7 @@ public class Patient extends Users{
           Connection conn = null;
           Statement stmt = null;
           try {
-              Class.forName("com.mysql.jdbc.Driver");
+              Class.forName("com.mysql.cj.jdbc.Driver");
            //   System.out.println("Connecting to database...");
               conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 
@@ -330,18 +400,21 @@ public class Patient extends Users{
           } catch (Exception e) {
               //Handle errors for Class.forName
               e.printStackTrace();
+              Logger.log(e.getMessage());
           } finally {
 
               try {
                   if (stmt != null)
                       stmt.close();
               } catch (SQLException se2) {
+                  Logger.log(se2.getMessage());
               }
               try {
                   if (conn != null)
                       conn.close();
               } catch (SQLException se) {
                   se.printStackTrace();
+                  Logger.log(se.getMessage());
               }
           }
 
@@ -352,7 +425,7 @@ public class Patient extends Users{
           Statement stmt = null;
           try {
               //Register JDBC driver
-              Class.forName("com.mysql.jdbc.Driver");
+              Class.forName("com.mysql.cj.jdbc.Driver");
 
               // Open a connection
            //   System.out.println("Connecting to database...");
@@ -404,21 +477,25 @@ public class Patient extends Users{
           catch (SQLException se) {
               //Handle errors for JDBC
               se.printStackTrace();
+              Logger.log(se.getMessage());
           } catch (Exception e) {
               //Handle errors for Class.forName
               e.printStackTrace();
+              Logger.log(e.getMessage());
           } finally {
 
               try {
                   if (stmt != null)
                       stmt.close();
               } catch (SQLException se2) {
+                  Logger.log(se2.getMessage());
               }
               try {
                   if (conn != null)
                       conn.close();
               } catch (SQLException se) {
                   se.printStackTrace();
+                  Logger.log(se.getMessage());
               }
           }
       }
@@ -428,7 +505,7 @@ public class Patient extends Users{
           Statement stmt = null;
 
               //Register JDBC driver
-              Class.forName("com.mysql.jdbc.Driver");
+              Class.forName("com.mysql.cj.jdbc.Driver");
 
               // Open a connection
            //   System.out.println("Connecting to database...");
@@ -442,13 +519,24 @@ public class Patient extends Users{
 
             int operation;
             operation=Integer.parseInt(br.readLine());
+            String validate;
             switch(operation)
             {
                 case 1:
                 {
                     System.out.println("Name : ");
                     String patientName;
-                    patientName=br.readLine();
+                    validate=br.readLine();
+                    if(Validator.isValidFullName(validate))
+                    {
+                        patientName=validate;
+                    }
+                    else
+                    {
+                        System.out.println("Only Alphabets are allowed in Field Name");
+                        return;
+                    }
+
                     try {
                          sql = "UPDATE patient SET name= '" + patientName + "' WHERE id='" + patientId + "' ";
                         int j=stmt.executeUpdate(sql);
@@ -463,6 +551,7 @@ public class Patient extends Users{
                     }
                     catch(Exception e){
                         System.out.println(e);
+                        Logger.log(e.getMessage());
                     }
                     break;
                 }
@@ -470,7 +559,17 @@ public class Patient extends Users{
                 {
                     System.out.println("Email : ");
                     String email;
-                    email=br.readLine();
+                    validate=br.readLine();
+                    if(Validator.validateEmail(validate))
+                    {
+                        email=validate;
+                    }
+                    else
+                    {
+                        System.out.println("Invalid Email Format...");
+                        return;
+                    }
+
                     try {
                         sql = "UPDATE patient SET email= '" +email + "' WHERE id='" + patientId + "' ";
                         int j=stmt.executeUpdate(sql);
@@ -485,6 +584,7 @@ public class Patient extends Users{
                     }
                     catch(Exception e){
                         System.out.println(e);
+                        Logger.log(e.getMessage());
                     }
                     break;
                 }
@@ -507,6 +607,7 @@ public class Patient extends Users{
                     }
                     catch(Exception e){
                         System.out.println(e);
+                        Logger.log(e.getMessage());
                     }
                     break;
                 }
@@ -534,7 +635,7 @@ public class Patient extends Users{
             String sql = "select * from doctor ";
             ResultSet queryResult = statement.executeQuery(sql);
 
-            if(queryResult!=null) {
+            if (queryResult.isBeforeFirst()){
                 System.out.println( "Doctor_ID"+"\t"+"Name"+"\t"+"Gender"+"\t"+"DepartmentID");
                 while (queryResult.next()) {
                     System.out.print( queryResult.getInt(1)+"\t");
@@ -556,11 +657,12 @@ public class Patient extends Users{
                 }
                 System.out.println();
                 System.out.println("Enter the Doctor_ID to View Doctor Details");
+
                 int doctorID=Integer.parseInt(reader.readLine());
                 sql = "select * from doctor where  id = '" + doctorID + "' ";
                 queryResult = statement.executeQuery(sql);
 
-                if (queryResult.next()) {
+                if (queryResult.isBeforeFirst()) {
                     SHS.printOptionsList("Doctor Details",new String[]{});
                     System.out.println(String.format("%-40s","doctorID:")+String.format("%20s",queryResult.getInt(1)));
                     System.out.println(String.format("%-40s","name:")+String.format("%20s",queryResult.getString(2)));
@@ -577,8 +679,13 @@ public class Patient extends Users{
                     System.out.println(String.format("%-40s","specialisation of the Doctor:")+String.format("%20s",queryResult.getString(13)));
                     System.out.println(String.format("%-40s","is Surgeon:")+String.format("%20s",queryResult.getBoolean(14)));
                     System.out.println(String.format("%-40s","designation:")+String.format("%20s",queryResult.getString(15)));
+                    System.out.println(String.format("%-40s","department:")+String.format("%20s",queryResult.getString(16)));
+                    System.out.println(String.format("%-40s","inTimeLOCAL:")+String.format("%20s",queryResult.getTime(17)));
+                    System.out.println(String.format("%-40s","outTimeLOCAL:")+String.format("%20s",queryResult.getTime(18)));
+
                 } else {
                     System.out.println("Wrong DoctorID Entered !!!");
+                    return;
                 }
 
 
@@ -590,10 +697,13 @@ public class Patient extends Users{
 
         } catch (SQLException e) {
             System.out.println("SQLException: " + e.getMessage());
+            Logger.log(e.getMessage());
         } catch (ClassNotFoundException e) {
             System.out.println("ClassNotFoundException " + e.getMessage());
+            Logger.log(e.getMessage());
         } catch (IOException e) {
             System.out.println("IOException! " + e.getMessage());
+            Logger.log(e.getMessage());
         }
     }
     public void searchDoctor() throws IOException, SQLException {
@@ -636,7 +746,7 @@ public class Patient extends Users{
            if (queryResult.isBeforeFirst()) {
 
                System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
-                       "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
+                       "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid \t"+"intimelocal \t"+"outtimelocal");
                while (queryResult.next()) {
                    System.out.print(queryResult.getInt(1) + "\t");
                    System.out.print(queryResult.getString(2) + "\t");
@@ -653,20 +763,25 @@ public class Patient extends Users{
                    System.out.print(queryResult.getString(13) + "\t");
                    System.out.print(queryResult.getString(14) + "\t");
                    System.out.print(queryResult.getString(15) + "\t");
-                   System.out.println(queryResult.getInt(16));
+                   System.out.print(queryResult.getString(16) + "\t");
+                   System.out.print(queryResult.getString(17) + "\t");
+                   System.out.println(queryResult.getInt(18));
                }
                System.out.println();
            }
            else
            {
                System.out.println("Wrong Input or No doctor exists for the department");
+               return;
            }
 
 
        } catch (SQLException e) {
            System.out.println("SQLException: " + e.getMessage());
+           Logger.log(e.getMessage());
        } catch (ClassNotFoundException e) {
            System.out.println("ClassNotFoundException " + e.getMessage());
+           Logger.log(e.getMessage());
        }
    }
     public void searchDoctorBasedOnID() throws IOException {
@@ -685,7 +800,7 @@ public class Patient extends Users{
              if (queryResult.isBeforeFirst()) {
 
                 System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
-                        "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
+                        "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid \t"+"intimelocal \t"+"outtimelocal");
                 while (queryResult.next()) {
                     System.out.print(queryResult.getInt(1) + "\t");
                     System.out.print(queryResult.getString(2) + "\t");
@@ -702,13 +817,16 @@ public class Patient extends Users{
                     System.out.print(queryResult.getString(13) + "\t");
                     System.out.print(queryResult.getString(14) + "\t");
                     System.out.print(queryResult.getString(15) + "\t");
-                    System.out.println(queryResult.getInt(16));
+                    System.out.print(queryResult.getString(16) + "\t");
+                    System.out.print(queryResult.getString(17) + "\t");
+                    System.out.println(queryResult.getInt(18));
                 }
                 System.out.println();
             }
             else
             {
                 System.out.println("Wrong Doctor ID");
+                return;
             }
 
 
@@ -716,8 +834,10 @@ public class Patient extends Users{
 
         } catch (SQLException e) {
             System.out.println("SQLException: " + e.getMessage());
+            Logger.log(e.getMessage());
         } catch (ClassNotFoundException e) {
             System.out.println("ClassNotFoundException " + e.getMessage());
+            Logger.log(e.getMessage());
         }
     }
     public void searchDoctorBasedOnName() throws IOException {
@@ -736,7 +856,7 @@ public class Patient extends Users{
             if (queryResult.isBeforeFirst())  {
 
                 System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
-                        "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
+                        "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid \t"+"intimelocal \t"+"outtimelocal");
                 while (queryResult.next()) {
                     System.out.print(queryResult.getInt(1) + "\t");
                     System.out.print(queryResult.getString(2) + "\t");
@@ -753,20 +873,25 @@ public class Patient extends Users{
                     System.out.print(queryResult.getString(13) + "\t");
                     System.out.print(queryResult.getString(14) + "\t");
                     System.out.print(queryResult.getString(15) + "\t");
-                    System.out.println(queryResult.getInt(16));
+                    System.out.print(queryResult.getString(16) + "\t");
+                    System.out.print(queryResult.getString(17) + "\t");
+                    System.out.println(queryResult.getInt(18));
                 }
                 System.out.println();
             }
             else
             {
                 System.out.println("Wrong Doctor Name or no doctor exists with entered name");
+                return;
             }
 
 
         } catch (SQLException e) {
             System.out.println("SQLException: " + e.getMessage());
+            Logger.log(e.getMessage());
         } catch (ClassNotFoundException e) {
             System.out.println("ClassNotFoundException " + e.getMessage());
+            Logger.log(e.getMessage());
         }
     }
 
@@ -785,7 +910,7 @@ public class Patient extends Users{
 
             if (queryResult.isBeforeFirst())  {
                 System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
-                        "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
+                        "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid \t"+"intimelocal \t"+"outtimelocal");
                 while (queryResult.next()) {
                     System.out.print(queryResult.getInt(1) + "\t");
                     System.out.print(queryResult.getString(2) + "\t");
@@ -802,20 +927,25 @@ public class Patient extends Users{
                     System.out.print(queryResult.getString(13) + "\t");
                     System.out.print(queryResult.getString(14) + "\t");
                     System.out.print(queryResult.getString(15) + "\t");
-                    System.out.println(queryResult.getInt(16));
+                    System.out.print(queryResult.getString(16) + "\t");
+                    System.out.print(queryResult.getString(17) + "\t");
+                    System.out.println(queryResult.getInt(18));
                 }
                 System.out.println();
             }
             else
             {
                 System.out.println("Wrong Specialization or no doctor exists with entered specialization");
+                return;
             }
 
 
         } catch (SQLException e) {
             System.out.println("SQLException: " + e.getMessage());
+            Logger.log(e.getMessage());
         } catch (ClassNotFoundException e) {
             System.out.println("ClassNotFoundException " + e.getMessage());
+            Logger.log(e.getMessage());
         }
     }
     public void searchDoctorBasedOnAddress() throws IOException {
@@ -833,7 +963,7 @@ public class Patient extends Users{
 
             if (queryResult.isBeforeFirst())  {
                 System.out.println("Doctor_ID" + "\t" + "Name" + "\t"+"DateOfBirth"+"\t"+"Age"+"\t"+ "Gender" + "\t" + "Phone-Number"+"\t"+"Email"+"\t"+"Address"+"\t"+"Schedule"+"\t"+"intimeopd \t" +
-                        "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid");
+                        "outtimeopd\t" +"specialization\t" +"issurgeon\t" +"designation \t" +"departmentid \t"+"intimelocal \t"+"outtimelocal");
                 while (queryResult.next()) {
                     System.out.print(queryResult.getInt(1) + "\t");
                     System.out.print(queryResult.getString(2) + "\t");
@@ -862,8 +992,10 @@ public class Patient extends Users{
 
         } catch (SQLException e) {
             System.out.println("SQLException: " + e.getMessage());
+            Logger.log(e.getMessage());
         } catch (ClassNotFoundException e) {
             System.out.println("ClassNotFoundException " + e.getMessage());
+            Logger.log(e.getMessage());
         }
     }
 
