@@ -15,13 +15,14 @@ public class Validator {
     }
 
     public static boolean isItInteger(String str) {
-        return Pattern.matches("^[0-9]+&", str);
+        return Pattern.matches("^[0-9]+$", str);
     }
 
     public static boolean isValidUserName(String str) {
         return Pattern.matches("^[a-zA-Z.'\\-]+$", str);
     }
 
+    //first last
     public static boolean isValidFullName(String str) {
         return Pattern.matches("^[a-zA-Z ]+$", str);
     }
@@ -118,7 +119,7 @@ public class Validator {
     }
 
     public static boolean isValidDesignation(String designation) {
-        String validDesignation[] = new String[]{"junior resident", "senior resident", "specialist", "senior specialist"};
+        String validDesignation[] = new String[]{"juniordoctor", "seniordoctor", "specialist", "seniorspecialist","hod"};
         Set<String> set = new HashSet<String>(Arrays.asList(validDesignation));
 
         if (!set.contains(designation.toLowerCase()))
@@ -136,7 +137,7 @@ public class Validator {
         ResultSet rs;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem", "root", "ankur");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem", "rjtmhy", "#Rjtmhy25");
             statement = connection.createStatement();
             String sql = "SELECT id FROM department WHERE id = '" + deptID + "';";
             rs = statement.executeQuery(sql);
@@ -163,15 +164,14 @@ public class Validator {
     }
 
     public static boolean isValidAppointmentId(String appointmentID) {
-        if (!isItInteger(appointmentID))
-            return false;
+        
 
         Connection connection;
         Statement statement;
         ResultSet rs;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem", "root", "ankur");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem", "rjtmhy", "#Rjtmhy25");
             statement = connection.createStatement();
             String sql = "SELECT id FROM appointment WHERE id = '" + appointmentID + "';";
             rs = statement.executeQuery(sql);
@@ -181,7 +181,7 @@ public class Validator {
                 set.add(rs.getInt("id"));
             }
 
-            if (set.contains(Integer.parseInt(appointmentID)))
+            if (set.contains(appointmentID))
                 return true;
             else
                 return false;
@@ -206,7 +206,7 @@ public class Validator {
         ResultSet rs;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem", "root", "ankur");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem", "rjtmhy", "#Rjtmhy25");
             statement = connection.createStatement();
             String sql = "SELECT id FROM doctor WHERE id = '" + doctorID + "';";
             rs = statement.executeQuery(sql);
@@ -241,7 +241,7 @@ public class Validator {
         ResultSet rs;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem", "root", "ankur");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem", "rjtmhy", "#Rjtmhy25");
             statement = connection.createStatement();
             String sql = "SELECT id FROM patient WHERE id = '" + patientID + "';";
             rs = statement.executeQuery(sql);
@@ -267,3 +267,4 @@ public class Validator {
         return false;
     }
 }
+
