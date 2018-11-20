@@ -297,7 +297,7 @@ public class Appointment {
                 }
 
             }
-            else if(choice==2)
+            else if(choice==2) // OOPD
             {
                 //intelligent algo to assign doctor
                 try {
@@ -316,10 +316,12 @@ public class Appointment {
                     ResultSet rs = stmt.executeQuery(sql);
                     ArrayList<Integer> listOfDoctorsOnThatDay = new ArrayList<>();
                     ArrayList<Long> totalTokenCountOfDoctorOnThatDay = new ArrayList<>();
+                    ArrayList<String> designationOfListOfDoctorOnThatDay = new ArrayList<>();
 
                     while (rs.next()) {
                         if (Arrays.asList(rs.getString("schedule").split(",")).contains(dayOfWeek)) {
                             listOfDoctorsOnThatDay.add(rs.getInt("id"));
+                            designationOfListOfDoctorOnThatDay.add(rs.getString("designation"));
                             //System.out.println("doctor id: " + rs.getInt("id"));
                             LocalTime inTime = rs.getTime("intimeopd").toLocalTime();
                             LocalTime outTime = rs.getTime("outtimeopd").toLocalTime();
@@ -332,14 +334,16 @@ public class Appointment {
 
                     ArrayList<Integer> listOfAvailableDoctorOnThatDay = new ArrayList<>();
                     ArrayList<Long> nextTokenCountOfDoctorOnThatDay = new ArrayList<>();
+                    ArrayList<String> designationOfAvailableDoctorOnThatDay = new ArrayList<>();
 
                     for (int i = 0; i < listOfDoctorsOnThatDay.size(); i++) {
                         sql = "SELECT COUNT(*) AS total FROM appointment WHERE doctor = '" + listOfDoctorsOnThatDay.get(i) +
-                                "' AND dateofappointment = '" + dateOfAppointment + "' " ;
+                                "' AND dateofappointment = '" + dateOfAppointment + "' AND location = 'OPD'";
                         rs = stmt.executeQuery(sql);
                         rs.next();
                         if (rs.getInt("total") < totalTokenCountOfDoctorOnThatDay.get(i)) {
                             listOfAvailableDoctorOnThatDay.add(listOfDoctorsOnThatDay.get(i));
+                            designationOfAvailableDoctorOnThatDay.add(designationOfListOfDoctorOnThatDay.get(i));
                             nextTokenCountOfDoctorOnThatDay.add(rs.getInt("total") + 1L);
                             //System.out.println("Added to list of available doctor: " + listOfDoctorsOnThatDay.get(i));
                         }
@@ -374,7 +378,11 @@ public class Appointment {
                         //System.out.println("Added to the specialisationList");
                         String specialisationSymptomsList[];
                         Arrays.sort(specialisationSymptomsList = rs.getString("symptomsList").split(",") );
-                        //System.out.println(specialisationSymptomsList.toString());
+                        trimStringList(specialisationSymptomsList);
+                        //print(specialisationSymptomsList);
+                        //System.out.println("symptoms enetered by doctor: ");
+                        //print(symptoms);
+                        //System.out.println("Match: " + getMatchingSymptomsCount(symptoms, specialisationSymptomsList));
                         matches.put(specialisation, getMatchingSymptomsCount(symptoms, specialisationSymptomsList));
 
                     }
@@ -386,24 +394,46 @@ public class Appointment {
                             indexOfMax = i;
                         }
                     }
+                    ArrayList<Integer> doctorListWithMaximumMatch = new ArrayList<>();
+                    //ArrayList<Integer>
+
+                    for(int i = 0; i < specialisationList.size(); i++) {
+                        if(matches.get(specialisationList.get(i)) == maxValue) {
+                            doctorListWithMaximumMatch.add(i);
+                        }
+                    }
+
+                    long tokenNum;
 
                     if (maxValue == 0) {
-                        System.out.println("Go to general physician");
+                        int index = 0;
+
+                        if (isCritical) {
+                            index = getHighestDesignationDoctorInList(designationOfAvailableDoctorOnThatDay);
+                        }
+
+                        finalDocId = listOfAvailableDoctorOnThatDay.get(index);
+                        tokenNum = nextTokenCountOfDoctorOnThatDay.get(index);
                     }
                     else {
+                        int index;
+                        if (isCritical) {
+                            index = getHighestDesignationDoctorInList(designationOfAvailableDoctorOnThatDay);
+                        }
+
                         finalDocId = listOfAvailableDoctorOnThatDay.get(
                                 specialisationOfAvailableDoctorOnThatDay.indexOf( specialisationList.get(indexOfMax) )
                         );
 
-                        long tokenNum = nextTokenCountOfDoctorOnThatDay.get(
+                        tokenNum = nextTokenCountOfDoctorOnThatDay.get(
                                 listOfAvailableDoctorOnThatDay.indexOf(finalDocId)
                         );
 
-                        System.out.println("doctor id:" + finalDocId);
-
-                        System.out.println("Token count: " + tokenNum);
-                        setTokenNumber(tokenNum);
                     }
+                    System.out.println("doctor id:" + finalDocId);
+
+                    System.out.println("Token count: " + tokenNum);
+                    setTokenNumber(tokenNum);
 
                 }catch (Exception exception) {
                     exception.printStackTrace();
@@ -528,7 +558,7 @@ public class Appointment {
 
                     for (int i = 0; i < listOfDoctorsOnThatDay.size(); i++) {
                         sql = "SELECT COUNT(*) AS total FROM appointment WHERE doctor = '" + listOfDoctorsOnThatDay.get(i) +
-                                "' AND dateofappointment = '" + dateOfAppointment + "' " ;
+                                "' AND dateofappointment = '" + dateOfAppointment + "' AND location = 'LOCAL'" ;
                         rs = stmt.executeQuery(sql);
                         rs.next();
                         if (rs.getInt("total") < totalTokenCountOfDoctorOnThatDay.get(i)) {
@@ -602,10 +632,12 @@ public class Appointment {
                     ResultSet rs = stmt.executeQuery(sql);
                     ArrayList<Integer> listOfDoctorsOnThatDay = new ArrayList<>();
                     ArrayList<Long> totalTokenCountOfDoctorOnThatDay = new ArrayList<>();
+                    ArrayList<String> designationOfListOfDoctorOnThatDay = new ArrayList<>();
 
                     while (rs.next()) {
                         if (Arrays.asList(rs.getString("schedule").split(",")).contains(dayOfWeek)) {
                             listOfDoctorsOnThatDay.add(rs.getInt("id"));
+                            designationOfListOfDoctorOnThatDay.add(rs.getString("designation"));
                             //System.out.println("doctor id: " + rs.getInt("id"));
                             LocalTime inTime = rs.getTime("intimelocal").toLocalTime();
                             LocalTime outTime = rs.getTime("outtimelocal").toLocalTime();
@@ -618,6 +650,7 @@ public class Appointment {
 
                     ArrayList<Integer> listOfAvailableDoctorOnThatDay = new ArrayList<>();
                     ArrayList<Long> nextTokenCountOfDoctorOnThatDay = new ArrayList<>();
+                    ArrayList<String> designationOfAvailableDoctorOnThatDay = new ArrayList<>();
 
                     for (int i = 0; i < listOfDoctorsOnThatDay.size(); i++) {
                         sql = "SELECT COUNT(*) AS total FROM appointment WHERE doctor = '" + listOfDoctorsOnThatDay.get(i) +
@@ -626,6 +659,7 @@ public class Appointment {
                         rs.next();
                         if (rs.getInt("total") < totalTokenCountOfDoctorOnThatDay.get(i)) {
                             listOfAvailableDoctorOnThatDay.add(listOfDoctorsOnThatDay.get(i));
+                            designationOfAvailableDoctorOnThatDay.add(designationOfListOfDoctorOnThatDay.get(i));
                             nextTokenCountOfDoctorOnThatDay.add(rs.getInt("total") + 1L);
                             //System.out.println("Added to list of available doctor: " + listOfDoctorsOnThatDay.get(i));
                         }
@@ -660,7 +694,11 @@ public class Appointment {
                         //System.out.println("Added to the specialisationList");
                         String specialisationSymptomsList[];
                         Arrays.sort(specialisationSymptomsList = rs.getString("symptomsList").split(",") );
-                        //System.out.println(specialisationSymptomsList.toString());
+                        trimStringList(specialisationSymptomsList);
+                        //print(specialisationSymptomsList);
+                        //System.out.println("symptoms enetered by doctor: ");
+                        //print(symptoms);
+                        //System.out.println("Match: " + getMatchingSymptomsCount(symptoms, specialisationSymptomsList));
                         matches.put(specialisation, getMatchingSymptomsCount(symptoms, specialisationSymptomsList));
 
                     }
@@ -672,27 +710,50 @@ public class Appointment {
                             indexOfMax = i;
                         }
                     }
+                    ArrayList<Integer> doctorListWithMaximumMatch = new ArrayList<>();
+                    //ArrayList<Integer>
+
+                    for(int i = 0; i < specialisationList.size(); i++) {
+                        if(matches.get(specialisationList.get(i)) == maxValue) {
+                            doctorListWithMaximumMatch.add(i);
+                        }
+                    }
+
+                    long tokenNum;
 
                     if (maxValue == 0) {
-                        System.out.println("Go to general physician");
+                        int index = 0;
+
+                        if (isCritical) {
+                            index = getHighestDesignationDoctorInList(designationOfAvailableDoctorOnThatDay);
+                        }
+
+                        finalDocId = listOfAvailableDoctorOnThatDay.get(index);
+                        tokenNum = nextTokenCountOfDoctorOnThatDay.get(index);
                     }
                     else {
+                        int index;
+                        if (isCritical) {
+                            index = getHighestDesignationDoctorInList(designationOfAvailableDoctorOnThatDay);
+                        }
+
                         finalDocId = listOfAvailableDoctorOnThatDay.get(
                                 specialisationOfAvailableDoctorOnThatDay.indexOf( specialisationList.get(indexOfMax) )
                         );
 
-                        long tokenNum = nextTokenCountOfDoctorOnThatDay.get(
+                        tokenNum = nextTokenCountOfDoctorOnThatDay.get(
                                 listOfAvailableDoctorOnThatDay.indexOf(finalDocId)
                         );
 
-                        System.out.println("doctor id:" + finalDocId);
-
-                        System.out.println("Token count: " + tokenNum);
-                        setTokenNumber(tokenNum);
                     }
+                    System.out.println("doctor id:" + finalDocId);
+
+                    System.out.println("Token count: " + tokenNum);
+                    setTokenNumber(tokenNum);
 
                 }catch (Exception exception) {
                     exception.printStackTrace();
+                    Logger.log(exception.getMessage());
                 }
             }
             else
@@ -757,6 +818,13 @@ public class Appointment {
 
     }
 
+    private void print(String arr[]) {
+        for(int i = 0; i < arr.length; i++) {
+            System.out.print(arr[i] + " ");
+        }
+        System.out.println();
+    }
+
 
     private int getMatchingSymptomsCount(String a[], String b[]) {
         int matchesFound = 0;
@@ -767,5 +835,37 @@ public class Appointment {
                     matchesFound ++;
 
         return matchesFound;
+    }
+
+    private void trimStringList(String a[]) {
+        for(int i = 0; i < a.length; i++) {
+            a[i] = a[i].trim();
+        }
+    }
+
+    private int getDesignationNumber(String str) {
+        if(str.equalsIgnoreCase("hod"))
+            return 5;
+        else if(str.equalsIgnoreCase("seniorspecialist"))
+            return 4;
+        else if(str.equalsIgnoreCase("specialist"))
+            return 3;
+        else if(str.equalsIgnoreCase("seniordoctor"))
+            return 2;
+        else
+            return 1;
+    }
+
+    private int getHighestDesignationDoctorInList(ArrayList<String > designationOfAvailableDoctor) {
+        int max = 0;
+        int indexOfMax = 0;
+        for(int i = 0; i < designationOfAvailableDoctor.size(); i++) {
+            if(getDesignationNumber(designationOfAvailableDoctor.get(i)) > max) {
+                max = getDesignationNumber(designationOfAvailableDoctor.get(i));
+                indexOfMax = i;
+            }
+        }
+
+        return indexOfMax;
     }
 }
