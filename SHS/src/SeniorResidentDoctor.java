@@ -1,3 +1,5 @@
+import Middleware.Logger;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -65,7 +67,7 @@ public class SeniorResidentDoctor extends Doctor implements Delegation {
                     int j=statement.executeUpdate(query);
                     if(j==1) {
                         System.out.println("Referral Completed successfully");
-                        System.out.println("patient with id:" + patientID + " is successfully referred to Senior doctor with id:" + referredDoctorsID);
+                        System.out.println("patient with id:" + patientID + " is successfully referred to doctor with id:" + referredDoctorsID);
                     }
                 }
             }
@@ -78,8 +80,10 @@ public class SeniorResidentDoctor extends Doctor implements Delegation {
         }
         catch (SQLException e) {
             System.out.println(e.getMessage()+e.getSQLState());
+            Logger.log(e.getMessage());
         }
     }
 
 
 }
+

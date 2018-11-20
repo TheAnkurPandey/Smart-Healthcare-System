@@ -1,4 +1,5 @@
 import Middleware.Logger;
+import Middleware.Validator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -151,8 +152,18 @@ public class Doctor extends Users{
             System.out.println(String.format("%90s", "Enter the following details to create the record:"));
             Boolean isRecordCreationSuccessful = false;
             String dayOfVisit = LocalDate.now().toString();
+            if(!Validator.isValidDate(dayOfVisit))
+            {
+                System.out.println("Incorrect date format");
+                return;
+            }
             System.out.println("Enter the day of discharge:");
             String dayOfDischarge = reader.readLine();
+            if(!Validator.isValidDate(dayOfDischarge))
+            {
+                System.out.println("Incorrect date format");
+                return;
+            }
             System.out.println("Enter diseases identified(as comma separated values):");
             String diseasesIdentified = reader.readLine();//scanner.nextInt();
             System.out.println("Enter the medicines being prescribed(as comma separated values):");
@@ -161,13 +172,16 @@ public class Doctor extends Users{
             String testsAdviced = reader.readLine();
             System.out.println("Enter the patientID:");
             String patientID = reader.readLine();
+            if(!Validator.isValidPatientId(patientID))
+            {
+                System.out.println("Wrong patient ID");
+                return;
+            }
             System.out.println("Enter the appointmentID:");
             String appointmentID = reader.readLine();
-
+              
             Statement statement = SHS.connection.createStatement();
 
-
-//global appointment ID and patient ID
                 String query = "Select * from patient where id ='"+patientID+"';";
                 ResultSet resultSet = statement.executeQuery(query);
                 if(!resultSet.next())
@@ -185,6 +199,7 @@ public class Doctor extends Users{
                     System.out.println("There is no appointment for patient with patient ID:"+patientID);
                     System.out.println("Please,enter correct appointment ID:");
                     appointmentID = reader.readLine();
+                     
                 }
 
 
@@ -201,8 +216,10 @@ public class Doctor extends Users{
         }
         catch (SQLException e) {
             System.out.println(e.getMessage());
+            Logger.log(e.getMessage());
         }catch (IOException e) {
             System.out.println("Please enter a valid input!" + e.getMessage());
+            Logger.log(e.getMessage());
         }
 
     }
@@ -216,6 +233,11 @@ public class Doctor extends Users{
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             System.out.println("Enter the patient ID:");
             String patientID = reader.readLine();
+            if(!Validator.isValidPatientId(patientID))
+            {
+                System.out.println("Wrong patient ID");
+                return;
+            }
             Statement statement = SHS.connection.createStatement();
 
                 String query = "Select * from record where patient = '" + patientID+ "'";
@@ -242,8 +264,10 @@ public class Doctor extends Users{
         }
         catch (SQLException e) {
             System.out.println("SQL Exception"+e.getMessage());
+            Logger.log(e.getMessage());
         }catch (IOException e) {
             System.out.println("Please enter a valid input!" + e.getMessage());
+            Logger.log(e.getMessage());
         }
     }
 
@@ -263,7 +287,11 @@ public class Doctor extends Users{
                 String username = reader.readLine();
                 System.out.println("Enter the password:");
                 String password = reader.readLine();
-
+                if(!Validator.isValidPassword(password))
+                {
+                    System.out.println("Invalid password");
+                    return false;
+                }
                 myQuery = "select * from doctor where id = '" + username + "' and password = '" + password + "';";
 
                 ResultSet queryResult = statement.executeQuery(myQuery);
@@ -297,8 +325,10 @@ public class Doctor extends Users{
 
         } catch (SQLException e) {
             System.out.println("SQLException: " + e.getMessage());
+            Logger.log(e.getMessage());
         } catch (IOException e) {
             System.out.println("IOException! " + e.getMessage());
+            Logger.log(e.getMessage());
         }
 
         return false;
@@ -322,6 +352,11 @@ public class Doctor extends Users{
                     case 1:
                         System.out.println("Enter new name:");
                         input = reader.readLine();
+                        if(!Validator.isValidFullName(input))
+                        {
+                            System.out.println("Invalid name");
+                            return;
+                        }
                         statement = SHS.connection.createStatement();
                         query = "update doctor set name ='"+input+"' where id ='"+doctorID+"';";
                         int rowCount = statement.executeUpdate(query);
@@ -340,6 +375,11 @@ public class Doctor extends Users{
                     case 3:
                         System.out.println("Enter new phone number:");
                         input = reader.readLine();
+                        if(!Validator.isValidPhoneNumber(input))
+                        {
+                            System.out.println("Invalid phone number");
+                            return;
+                        }
                         statement = SHS.connection.createStatement();
                         query = "update doctor set phonenumber ='"+input+"' where id ='"+doctorID+"';";
                         rowCount = statement.executeUpdate(query);
@@ -359,10 +399,12 @@ public class Doctor extends Users{
         catch (IOException exception)
         {
             System.out.println("IOException :" +exception.getMessage());
+            Logger.log(exception.getMessage());
         }
         catch (SQLException exception)
         {
             System.out.println("SQLException :" +exception.getMessage());
+            Logger.log(exception.getMessage());
         }
     }
 
@@ -455,19 +497,29 @@ public class Doctor extends Users{
 
                     int doctorBeingReferredTo;
                     int departmentBeingReferredTo;
-                    statement.close();
+                    String  doctor = "";
                     switch (doctor_type)
                     {
                         case JUNIOR_DOCTOR:
                             operatingDoctor = new JuniorResidentDoctor();
                             System.out.println("Enter the id of the doctor to which you want to refer this patient");
-                            doctorBeingReferredTo  = Integer.parseInt(reader.readLine());
+                            doctor =reader.readLine();
+                            if(!Validator.isValidDoctorId(doctor))
+                            {
+                                System.out.println("Wrong doctorID");
+                            }
+                            doctorBeingReferredTo  = Integer.parseInt(doctor);
                             ((JuniorResidentDoctor) operatingDoctor).referPatient(doctorID,doctorBeingReferredTo,patientID);
                             break;
                         case SENIOR_DOCTOR:
                             operatingDoctor = new SeniorResidentDoctor();
                             System.out.println("Enter the id of the doctor to which you want to refer this patient");
-                            doctorBeingReferredTo = Integer.parseInt(reader.readLine());
+                            doctor =reader.readLine();
+                            if(!Validator.isValidDoctorId(doctor))
+                            {
+                                System.out.println("Wrong doctorID");
+                            }
+                            doctorBeingReferredTo = Integer.parseInt(doctor);
                             ((SeniorResidentDoctor) operatingDoctor).referPatient(doctorID,doctorBeingReferredTo,patientID);
                             break;
                         case SPECIALIST:
@@ -477,11 +529,23 @@ public class Doctor extends Users{
                             System.out.println("2.Inter Departmental Refer");
                             int choice = Integer.parseInt(reader.readLine());
                             System.out.println("Enter the id of the doctor to which you want to refer this patient");
-                            doctorBeingReferredTo = Integer.parseInt(reader.readLine());
+                            doctor =reader.readLine();
+                            if(!Validator.isValidDoctorId(doctor))
+                            {
+                                System.out.println("Wrong doctorID");
+                                return;
+                            }
+                            doctorBeingReferredTo = Integer.parseInt(doctor);
                             if(choice==2)
                             {
                                 System.out.println("Enter the department ID:");
-                                departmentBeingReferredTo = Integer.parseInt(reader.readLine());
+                                String department = reader.readLine();
+                                if(!Validator.isvalidDepartmentId(department))
+                                {
+                                    System.out.println("Wrong department ID");
+                                    return;
+                                }
+                                departmentBeingReferredTo = Integer.parseInt(department);
                                 ((Specialist) operatingDoctor).referToAnotherDepartment(departmentBeingReferredTo,doctorID,doctorBeingReferredTo,patientID);
                             }
                             else if(choice == 1)
@@ -496,9 +560,21 @@ public class Doctor extends Users{
                         case SENIOR_SPECIALIST:
                             operatingDoctor = new SeniorSpecialist();
                             System.out.println("Enter the id of the doctor to which you want to refer this patient");
-                            doctorBeingReferredTo = Integer.parseInt(reader.readLine());
+                            doctor =reader.readLine();
+                            if(!Validator.isValidDoctorId(doctor))
+                            {
+                                System.out.println("Wrong doctorID");
+                                return;
+                            }
+                            doctorBeingReferredTo = Integer.parseInt(doctor);
                             System.out.println("Enter the department ID:");
-                            departmentBeingReferredTo = Integer.parseInt(reader.readLine());
+                            String department = reader.readLine();
+                            if(!Validator.isvalidDepartmentId(department))
+                            {
+                                System.out.println("Wrong department ID");
+                                return;
+                            }
+                            departmentBeingReferredTo = Integer.parseInt(department);
                             ((SeniorSpecialist) operatingDoctor).referToAnotherDepartment(departmentBeingReferredTo,doctorID,doctorBeingReferredTo,patientID);
                             break;
                     }
@@ -518,8 +594,10 @@ public class Doctor extends Users{
         }
         catch (SQLException e) {
             System.out.println(e.getMessage());
+            Logger.log(e.getMessage());
         }catch (IOException e) {
             System.out.println("Please enter a valid input!" + e.getMessage());
+            Logger.log(e.getMessage());
         }
 
 
@@ -533,9 +611,11 @@ public class Doctor extends Users{
             Statement statement = SHS.connection.createStatement();
             String query = "select patient.name,appointment.id,appointment.patient,appointment.tokennumber,appointment.location,appointment.iscritical from patient inner join appointment on appointment.patient=patient.id where doctor = '"+doctorID+"' AND dateofappointment = '"+LocalDate.now()+"' AND ispatientattended='0' AND location='"+location+"' AND iscritical = 'T' order by tokennumber;";
             ResultSet resultSet = statement.executeQuery(query);
+            Boolean isEntriesDisplayed = false;
             for(int i=1;resultSet.next();i++)
             {
 
+                isEntriesDisplayed = true;
                 System.out.println(String.format("%30s","-"+i+"-"));
                 System.out.println(String.format("%-40s", "patient ID:") + String.format("%20s", resultSet.getString("patient")));
                 System.out.println(String.format("%-40s", "patient name:") + String.format("%20s", resultSet.getString("name")));
@@ -549,12 +629,18 @@ public class Doctor extends Users{
             for(int i=1;resultSet.next();i++)
             {
 
+                isEntriesDisplayed = true;
                 System.out.println(String.format("%30s","-"+i+"-"));
                 System.out.println(String.format("%-40s", "patient ID:") + String.format("%20s", resultSet.getString("patient")));
                 System.out.println(String.format("%-40s", "patient name:") + String.format("%20s", resultSet.getString("name")));
                 System.out.println(String.format("%-40s", "appointment ID:") + String.format("%20s", resultSet.getString("id")));
                 System.out.println(String.format("%-40s", "token number:") + String.format("%20s", resultSet.getInt("tokennumber")));
                 System.out.println(String.format("%-40s", "is critical:") + String.format("%20s", resultSet.getString("iscritical")));
+            }
+
+            if(!isEntriesDisplayed)
+            {
+                System.out.println("There is no unattended patient left for today!");
             }
         }
         catch (SQLException exception)
@@ -567,22 +653,32 @@ public class Doctor extends Users{
     public void sortListOfAssignedPatientByID() {//display patientID
         try {
             Statement statement = SHS.connection.createStatement();
-            String query = "select patient.name,appointment.id,appointment.patient,appointment.tokennumber from patient inner join appointment on appointment.patient=patient.id where doctor = '"+doctorID+"' AND dateofappointment >= '"+LocalDate.now()+"'  AND ispatientattended='0' order by appointment.patient;";
+            String query = "select patient.name,appointment.id,appointment.patient,appointment.tokennumber,appointment.iscritical from patient inner join appointment on appointment.patient=patient.id where doctor = '"+doctorID+"' AND dateofappointment >= '"+LocalDate.now()+"'  AND ispatientattended='0' order by appointment.patient;";
+
+            Boolean isEntriesDisplayed = false;
 
             ResultSet resultSet = statement.executeQuery(query);
             for(int i=1;resultSet.next();i++)
             {
+                isEntriesDisplayed = true;
                 System.out.println(String.format("%30s","-"+i+"-"));
                 System.out.println(String.format("%-40s", "patient ID:") + String.format("%20s", resultSet.getString("patient")));
                 System.out.println(String.format("%-40s", "appointment ID:") + String.format("%20s", resultSet.getString("id")));
                 System.out.println(String.format("%-40s", "patient name:") + String.format("%20s", resultSet.getString("name")));
                 System.out.println(String.format("%-40s", "token number:") + String.format("%20s", resultSet.getInt("tokennumber")));
+                System.out.println(String.format("%-40s", "is critical:") + String.format("%20s", resultSet.getString("iscritical")));
+
+            }
+            if(!isEntriesDisplayed)
+            {
+                System.out.println("There is no unattended patient left for today!");
             }
 
         }
         catch (SQLException exception)
         {
             System.out.println("SQLException :" +exception.getMessage());
+            Logger.log(exception.getMessage());
         }
 
     }
@@ -592,23 +688,34 @@ public class Doctor extends Users{
     public void sortListOfAssignedPatientByName() {
         try {
             Statement statement = SHS.connection.createStatement();
-            String query = "select patient.name,appointment.id,appointment.patient,appointment.tokennumber from patient inner join appointment on appointment.patient=patient.id where doctor = '"+doctorID+"' AND dateofappointment >= '"+LocalDate.now()+"' AND ispatientattended='0' order by patient.name;";
+            String query = "select patient.name,appointment.id,appointment.patient,appointment.tokennumber,appointment.iscritical from patient inner join appointment on appointment.patient=patient.id where doctor = '"+doctorID+"' AND dateofappointment >= '"+LocalDate.now()+"' AND ispatientattended='0' order by patient.name;";
             ResultSet resultSet = statement.executeQuery(query);
+
+            Boolean isEntriesDisplayed = false;
+
             for(int i=1;resultSet.next();i++)
             {
-
+                isEntriesDisplayed = true;
                 System.out.println(String.format("%30s","-"+i+"-"));
                 System.out.println(String.format("%-40s", "patient ID:") + String.format("%20s", resultSet.getString("patient")));
                 System.out.println(String.format("%-40s", "patient name:") + String.format("%20s", resultSet.getString("name")));
                 System.out.println(String.format("%-40s", "appointment ID:") + String.format("%20s", resultSet.getString("id")));
                 System.out.println(String.format("%-40s", "token number:") + String.format("%20s", resultSet.getInt("tokennumber")));
+                System.out.println(String.format("%-40s", "is critical:") + String.format("%20s", resultSet.getString("iscritical")));
+
+            }
+            if(!isEntriesDisplayed)
+            {
+                System.out.println("There is no unattended patient left for today!");
             }
 
         }
         catch (SQLException exception)
         {
             System.out.println("SQLException :" +exception.getMessage());
+            Logger.log(exception.getMessage());
         }
 
     }
 }
+

@@ -57,10 +57,12 @@ public class SHS {
         catch (SQLException exception)
         {
             System.out.println("SQLException"+exception.getMessage());
+            Logger.log(exception.getMessage());
         }
         catch (ClassNotFoundException exception)
         {
             System.out.println("ClassNotFoundException"+exception.getMessage());
+            Logger.log(exception.getMessage());
         }
     }
 
@@ -117,7 +119,7 @@ public class SHS {
                         }
                         else
                         {
-                            System.out.println("Too many wrong attempts. Please try after some time.");
+                            System.out.println("Please enter valid credentials.");
                         }
                         break;
                     // Patient options
@@ -147,8 +149,8 @@ public class SHS {
                             selectedOption = 0;
                             while (selectedOption != -1) {
                                 SHS.printOptionsList("Doctor Account Options",
-                                        new String[]{"1.Create a new record", "2.Treat patient","3.View patient History","4.Get list of patients assigned",
-                                                "5.Sort list of assigned patients by ID","6.Sort list of assigned patients by Name","7.Edit profile","8.Logout"});
+                                        new String[]{"1.Create a new record", "2.Treat patient","3.View patient History",
+                                                "4.Sort list of assigned patients by ID","5.Sort list of assigned patients by Name","6.Edit profile","7.Logout"});
                                 System.out.println("Enter an option number:");
                                 selectedOption = Integer.parseInt(reader.readLine());
                                 switch (selectedOption) {
@@ -161,19 +163,16 @@ public class SHS {
                                     case 3:// View patient History
                                         doctor.viewPatientHistory();
                                         break;
-                                    case 4://Get list of patients assigned//BY default only opd patients are displayed
-                                        doctor.getListOfAssignedPatient(Doctor.LOCATION.OPD);
-                                        break;
-                                    case 5://Sort list of assigned patients by ID
+                                    case 4://Sort list of assigned patients by ID
                                         doctor.sortListOfAssignedPatientByID();
                                         break;
-                                    case 6://Sort list of assigned patients by Name
+                                    case 5://Sort list of assigned patients by Name
                                         doctor.sortListOfAssignedPatientByName();
                                         break;
-                                    case 7://Edit profile
+                                    case 6://Edit profile
                                         doctor.editProfile();
                                         break;
-                                    case 8://Logout
+                                    case 7://Logout
                                         selectedOption = -1;
                                         break;
                                     default:
@@ -184,7 +183,7 @@ public class SHS {
                         }
                         else
                         {
-                            System.out.println("Too many wrong attempts. Please try after some time.");
+                            System.out.println("Please enter valid credentials.");
                         }
                         break;
                     case -1:

@@ -1,3 +1,6 @@
+import Middleware.Logger;
+import Middleware.Validator;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -17,9 +20,19 @@ public class Admin extends Users {
             while (count < 3) {
                 System.out.println("Enter the username:");
                 String username = reader.readLine();
+                if(!Validator.isValidUserName(username))
+                {
+                    System.out.println("The format of username is incorrect");
+                    return false;
+                }
                 System.out.println("Enter the password:");
                 String password = reader.readLine();
-                if (username.equals("oopd") && password.equals("project")) {
+                if(!Validator.isValidPassword(password))
+                {
+                    System.out.println("Incorrect Password Format.");
+                    return false;
+                }
+                if (username.equals("oopd") && password.equals("Project1@")) {
                     System.out.println("Login successful!");
                     return true;
                 }
@@ -33,6 +46,7 @@ public class Admin extends Users {
         catch (IOException e)
         {
             System.out.println("IOException message: "+e.getMessage());
+            Logger.log(e.getMessage());
         }
         return false;
     }
@@ -45,33 +59,79 @@ public class Admin extends Users {
             Boolean isRegistrationSuccessful = false;
             System.out.println("Enter the name:");
             String name = reader.readLine();
+            if(!Validator.isValidFullName(name))
+            {
+                System.out.println("Only alphabets are allowed !");
+                return;
+            }
             System.out.println("Enter the dateOfBirth:");
             String dateOfBirth = reader.readLine();
+            if(!Validator.isValidDate(dateOfBirth))
+            {
+                System.out.println("Date of Birth(YYYY-MM-DD) :");
+                return;
+            }
             LocalDate todaysDate = LocalDate.now();
             LocalDate dOfBirth = LocalDate.parse(dateOfBirth);
             Period differenceInDates = Period.between(dOfBirth,todaysDate);
             Integer age = differenceInDates.getYears();//scanner.nextInt();
             System.out.println("Enter the gender:");
             String gender = reader.readLine();
+            if(!Validator.isValidGender(gender))
+            {
+                System.out.println("Invalid Gender");
+                return;
+            }
             System.out.println("Enter the phoneNumber:");
-            Long phoneNumber = Long.parseLong(reader.readLine());//scanner.nextLong();
+            String number = reader.readLine();
+            if(!Validator.isValidPhoneNumber(number))
+            {
+                System.out.println("Invalid Phone Number ");
+                return;
+            }
+            Long phoneNumber = Long.parseLong(number);
             System.out.println("Enter the email:");
             String email = reader.readLine();
+            if(!Validator.validateEmail(email))
+            {
+                System.out.println("Invalid Email ");
+                return;
+            }
             System.out.println("Enter the password:");
             String password = reader.readLine();
+            if(!Validator.isValidPassword(password))
+            {
+                System.out.println("Invalid password ");
+                return;
+            }
             System.out.println("Enter the address:");
             String address = reader.readLine();
             System.out.println("Enter the schedule:");
             String schedule = reader.readLine();
+            if(!Validator.isValidSchedule(schedule))
+            {
+                System.out.println("Invalid schedule ");
+                return;
+            }
             Boolean isValidInterval = false;
             LocalTime inOPD = LocalTime.now(),outOPD = LocalTime.now(),inLocal,outLocal;
             String inTimeOPD="",inTimeLocal="",outTimeOPD="",outTimeLocal="";
             while (!isValidInterval) {
-                System.out.println("Enter the inTimeOPD:");
+                 System.out.println("Enter the inTimeOPD:");
                  inTimeOPD = reader.readLine();
+                 if(!Validator.isValidTime(inTimeOPD))
+                 {
+                     System.out.println("Incorrect time format:");
+                     return;
+                 }
                 inOPD = LocalTime.parse(inTimeOPD);
-                System.out.println("Enter the outTimeOPD:");
+                 System.out.println("Enter the outTimeOPD:");
                  outTimeOPD = reader.readLine();
+                 if(!Validator.isValidTime(outTimeOPD))
+                {
+                    System.out.println("Incorrect time format:");
+                    return;
+                }
                 outOPD = LocalTime.parse(outTimeOPD);
 
                 if(inOPD.isBefore(outOPD))
@@ -86,10 +146,20 @@ public class Admin extends Users {
             while(!isNonIntersecting) {
                 System.out.println("Enter the inTimeLocal:");
                  inTimeLocal = reader.readLine();
+                 if(!Validator.isValidTime(inTimeLocal))
+                 {
+                     System.out.println("Incorrect time format:");
+                     return;
+                 }
                 inLocal = LocalTime.parse(inTimeLocal);
                 System.out.println("Enter the outTimeLocal:");
                  outTimeLocal = reader.readLine();
-                outLocal = LocalTime.parse(outTimeLocal);
+                if(!Validator.isValidTime(outTimeLocal))
+                {
+                    System.out.println("Incorrect time format:");
+                    return;
+                }
+                 outLocal = LocalTime.parse(outTimeLocal);
 
                 if(inLocal.isBefore(outLocal)&&((inLocal.isBefore(inOPD)&&outLocal.isBefore(inOPD))||(inLocal.isAfter(outOPD)&&outLocal.isAfter(outOPD))))
                 {
@@ -97,12 +167,13 @@ public class Admin extends Users {
                 }
                 else
                 {
-                    System.out.println("Enter correct timings!");
+                    System.out.println("Enter correct timings! Entered timings overlap.");
                 }
             }
 
             System.out.println("Enter the specialisation of the Doctor:");
             String specialisation = reader.readLine();
+
             System.out.println("Is the doctor a Surgeon, if yes then enter Yes or Y else enter No or N ");
             String isSurgeon = reader.readLine();
             int isSurgeonStatus = 0;
@@ -113,12 +184,22 @@ public class Admin extends Users {
             }
             System.out.println("Enter the departmentID:");
             String departmentID = reader.readLine();
+            if(!Validator.isvalidDepartmentId(departmentID))
+            {
+                System.out.println("Incorrect departmentID");
+                return;
+            }
             Boolean isDesignationValid = false;
             String designation = "";
             while(!isDesignationValid) {
 
                 System.out.println("Enter the designation:");
                  designation = reader.readLine();
+                 if(!Validator.isValidDesignation(designation))
+                 {
+                     System.out.println("Incorrect designation ");
+                     return;
+                 }
                 if(designation.equalsIgnoreCase("HOD"))
                 {
                     Statement statement = SHS.connection.createStatement();
@@ -167,9 +248,11 @@ public class Admin extends Users {
 
         }
          catch (SQLException e) {
-        System.out.println(e.getMessage());
+            System.out.println(e.getMessage());
+             Logger.log(e.getMessage());
          }catch (IOException e) {
             System.out.println("Please enter a valid input!" + e.getMessage());
+            Logger.log(e.getMessage());
         }
 
     }
@@ -188,10 +271,10 @@ public class Admin extends Users {
             Statement statement = SHS.connection.createStatement();
             while (!(isDoctorIDValid&&isAppointmentIDValid)) {
 
-
                 if(!isAppointmentIDValid) {
                     System.out.println("Enter the appointment ID:");
                     appointmentID = reader.readLine();
+
                      query = "Select * from appointment where id = '" + appointmentID + "' AND ispatientattended = '0';";
                     resultSet = statement.executeQuery(query);
                     if (resultSet.next()) {
@@ -219,7 +302,11 @@ public class Admin extends Users {
                  if(!isDoctorIDValid) {
                      System.out.println("Enter the doctor ID:");
                      doctorID = reader.readLine();
-
+                     if(!Validator.isValidDoctorId(doctorID))
+                     {
+                         System.out.println("Incorrect doctor ID");
+                         return;
+                     }
                      query = "Select * from doctor  where id = '" + doctorID + "';";
 
                      resultSet  = statement.executeQuery(query);
@@ -302,8 +389,10 @@ public class Admin extends Users {
         }
         catch (SQLException e) {
         System.out.println("SQLException: " + e.getMessage());
+            Logger.log(e.getMessage());
     }  catch (IOException e) {
         System.out.println("IOException! " + e.getMessage());
+            Logger.log(e.getMessage());
     }
 
     }
@@ -316,6 +405,11 @@ public class Admin extends Users {
 
             System.out.println("Enter the patient ID:");
             String doctorID = reader.readLine();
+            if(!Validator.isValidDoctorId(doctorID))
+            {
+                System.out.println("Incorrect doctorID");
+                return;
+            }
             myQuery = "select * from patient where id = '" + doctorID + "';";
             ResultSet queryResult = statement.executeQuery(myQuery);
 
@@ -336,8 +430,10 @@ public class Admin extends Users {
 
         } catch (SQLException e) {
             System.out.println("SQLException: " + e.getMessage());
+            Logger.log(e.getMessage());
         }catch (IOException e) {
             System.out.println("IOException! " + e.getMessage());
+            Logger.log(e.getMessage());
         }
     }
 
@@ -349,6 +445,10 @@ public class Admin extends Users {
 
                 System.out.println("Enter the doctor ID:");
                 String doctorID = reader.readLine();
+                if(!Validator.isValidDoctorId(doctorID))
+                {
+                    System.out.println("Incorrect ID");
+                }
                 myQuery = "select * from doctor where id = '" + doctorID + "';";
                 ResultSet queryResult = statement.executeQuery(myQuery);
 
@@ -376,8 +476,11 @@ public class Admin extends Users {
 
         } catch (SQLException e) {
             System.out.println("SQLException: " + e.getMessage());
+            Logger.log(e.getMessage());
         }  catch (IOException e) {
             System.out.println("IOException! " + e.getMessage());
+            Logger.log(e.getMessage());
         }
     }
 }
+

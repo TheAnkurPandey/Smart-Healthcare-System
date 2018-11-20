@@ -97,7 +97,7 @@ public class Validator {
         if (days.length > 7)
             return false;
 
-        String validDays[] = new String[]{"mon", "tue", "wed", "thus", "fri", "sat", "sun"};
+        String validDays[] = new String[]{"mon", "tue", "wed", "thu", "fri", "sat", "sun"};
         Set<String> set = new HashSet<String>(Arrays.asList(validDays));
 
         for (String day : days) {
@@ -137,7 +137,7 @@ public class Validator {
         ResultSet rs;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem", "rjtmhy", "#Rjtmhy25");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem?verifyServerCertificate=false&useSSL=true", "rjtmhy", "#Rjtmhy25");
             statement = connection.createStatement();
             String sql = "SELECT id FROM department WHERE id = '" + deptID + "';";
             rs = statement.executeQuery(sql);
@@ -164,14 +164,14 @@ public class Validator {
     }
 
     public static boolean isValidAppointmentId(String appointmentID) {
-        
+
 
         Connection connection;
         Statement statement;
         ResultSet rs;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem", "rjtmhy", "#Rjtmhy25");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem?verifyServerCertificate=false&useSSL=true", "rjtmhy", "#Rjtmhy25");
             statement = connection.createStatement();
             String sql = "SELECT id FROM appointment WHERE id = '" + appointmentID + "';";
             rs = statement.executeQuery(sql);
@@ -206,7 +206,7 @@ public class Validator {
         ResultSet rs;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem", "rjtmhy", "#Rjtmhy25");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem?verifyServerCertificate=false&useSSL=true", "rjtmhy", "#Rjtmhy25");
             statement = connection.createStatement();
             String sql = "SELECT id FROM doctor WHERE id = '" + doctorID + "';";
             rs = statement.executeQuery(sql);
@@ -241,7 +241,7 @@ public class Validator {
         ResultSet rs;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem", "rjtmhy", "#Rjtmhy25");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/SmartHealthcareSystem?verifyServerCertificate=false&useSSL=true", "rjtmhy", "#Rjtmhy25");
             statement = connection.createStatement();
             String sql = "SELECT id FROM patient WHERE id = '" + patientID + "';";
             rs = statement.executeQuery(sql);
