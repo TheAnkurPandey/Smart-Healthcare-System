@@ -2,9 +2,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.Period;
 
 
-public class Admin {
+public class Admin extends Users {
 
     public Boolean successfulAdminLogin() {
         try {
@@ -40,14 +43,14 @@ public class Admin {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             System.out.println(String.format("%90s", "Enter the details of the doctor:"));
             Boolean isRegistrationSuccessful = false;
-//            System.out.println("Enter the doctorID:");
-//            String doctorID = reader.readLine();
             System.out.println("Enter the name:");
             String name = reader.readLine();
             System.out.println("Enter the dateOfBirth:");
             String dateOfBirth = reader.readLine();
-            System.out.println("Enter the age:");
-            Integer age = Integer.parseInt(reader.readLine());//scanner.nextInt();
+            LocalDate todaysDate = LocalDate.now();
+            LocalDate dOfBirth = LocalDate.parse(dateOfBirth);
+            Period differenceInDates = Period.between(dOfBirth,todaysDate);
+            Integer age = differenceInDates.getYears();//scanner.nextInt();
             System.out.println("Enter the gender:");
             String gender = reader.readLine();
             System.out.println("Enter the phoneNumber:");
@@ -60,10 +63,44 @@ public class Admin {
             String address = reader.readLine();
             System.out.println("Enter the schedule:");
             String schedule = reader.readLine();
-            System.out.println("Enter the inTimeOPD:");
-            String inTimeOPD = reader.readLine();
-            System.out.println("Enter the outTimeOPD:");
-            String outTimeOPD = reader.readLine();
+            Boolean isValidInterval = false;
+            LocalTime inOPD = LocalTime.now(),outOPD = LocalTime.now(),inLocal,outLocal;
+            String inTimeOPD="",inTimeLocal="",outTimeOPD="",outTimeLocal="";
+            while (!isValidInterval) {
+                System.out.println("Enter the inTimeOPD:");
+                 inTimeOPD = reader.readLine();
+                inOPD = LocalTime.parse(inTimeOPD);
+                System.out.println("Enter the outTimeOPD:");
+                 outTimeOPD = reader.readLine();
+                outOPD = LocalTime.parse(outTimeOPD);
+
+                if(inOPD.isBefore(outOPD))
+                    isValidInterval = true;
+                else
+                {
+                    System.out.println("Enter correct timings!");
+                }
+
+            }
+            Boolean isNonIntersecting = false;
+            while(!isNonIntersecting) {
+                System.out.println("Enter the inTimeLocal:");
+                 inTimeLocal = reader.readLine();
+                inLocal = LocalTime.parse(inTimeLocal);
+                System.out.println("Enter the outTimeLocal:");
+                 outTimeLocal = reader.readLine();
+                outLocal = LocalTime.parse(outTimeLocal);
+
+                if(inLocal.isBefore(outLocal)&&((inLocal.isBefore(inOPD)&&outLocal.isBefore(inOPD))||(inLocal.isAfter(outOPD)&&outLocal.isAfter(outOPD))))
+                {
+                    isNonIntersecting = true;
+                }
+                else
+                {
+                    System.out.println("Enter correct timings!");
+                }
+            }
+
             System.out.println("Enter the specialisation of the Doctor:");
             String specialisation = reader.readLine();
             System.out.println("Is the doctor a Surgeon, if yes then enter Yes or Y else enter No or N ");
@@ -74,16 +111,55 @@ public class Admin {
             } else if (isSurgeon.equalsIgnoreCase("No") || isSurgeon.equalsIgnoreCase("N")) {
                 isSurgeonStatus = 0;
             }
-
-            System.out.println("Enter the designation:");
-            String designation = reader.readLine();
             System.out.println("Enter the departmentID:");
             String departmentID = reader.readLine();
+            Boolean isDesignationValid = false;
+            String designation = "";
+            while(!isDesignationValid) {
+
+                System.out.println("Enter the designation:");
+                 designation = reader.readLine();
+                if(designation.equalsIgnoreCase("HOD"))
+                {
+                    Statement statement = SHS.connection.createStatement();
+                    String query = "select hodid from department where id = "+departmentID+" AND hodid is null;";
+                    ResultSet resultSet = statement.executeQuery(query);
+                    if(resultSet.next())
+                    {
+                        //the department doesn't have and hod there we can assign HOD to it.
+                        query = "select * from doctor order by id desc";
+                        resultSet = statement.executeQuery(query);
+                        int doctorID = 0;
+                        if(resultSet.next())
+                        {
+                            doctorID = resultSet.getInt("id");
+                            doctorID += 1;
+                        }
+
+                        query = "update department set hodid = "+doctorID+" where id = "+departmentID+";";
+                        int rowCount = statement.executeUpdate(query);
+                        if(rowCount>0)
+                        {
+                            System.out.println("Department with id : "+departmentID+" has been assigned an HOD" );
+                        }
+                        isDesignationValid = true;
+                    }
+                    else
+                    {
+                        isDesignationValid = false;
+                        System.out.println("The department already have an HOD you can't add another!");
+                    }
+
+                }
+                else
+                    isDesignationValid = true;
+
+                }
 
                 Statement statement = SHS.connection.createStatement();
 
                      String  query = "insert into doctor values(NULL,'" + name + "','" + dateOfBirth + "','" + age + "','" + gender + "','" + phoneNumber + "','" + email + "','" + password + "','"
-                                + address + "','" + schedule + "','" + inTimeOPD + "','" + outTimeOPD + "','" + specialisation + "','" + isSurgeonStatus + "','" + designation + "','"+departmentID+"');";
+                                + address + "','" + schedule + "','" + inTimeOPD + "','" + outTimeOPD + "','" + specialisation + "','" + isSurgeonStatus + "','" + designation + "','"+departmentID+"','" + inTimeLocal + "','" + outTimeLocal + "');";
                         statement.executeUpdate(query);
 
                     System.out.println("Doctor successfully registered!");
@@ -99,34 +175,72 @@ public class Admin {
     }
 
     //appointment insertion syntax :  insert into appointment values ('11','rajat','1995','2018-10-02','1212','Yes','Fever,Body ache,Restlessness','Delhi','0','1');
-    //reassign a doctor to a patient in the appointment
-    public void  reassignDoctorToPatient() {//ms..tested//As per gaurav I have to ask only with appointmentid
+    //reassign a doctor to a patient in the appointment by deleting previous appointment and creating a new one on that same day
+    public void  reassignDoctorToPatient() {//
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            String appointmentID="",doctorID="",query="";
+            String appointmentID="",doctorID="",query="",departmentCode="";
+            int tokenNumber = 0,departmentID=0,patientID=0;
+            LocalDate dateOfAppointment = LocalDate.now();
             ResultSet resultSet;
             Boolean isAppointmentIDValid = false;
             Boolean isDoctorIDValid = false;
             Statement statement = SHS.connection.createStatement();
-            while (!(isDoctorIDValid&&isAppointmentIDValid)) {//infinite
+            while (!(isDoctorIDValid&&isAppointmentIDValid)) {
 
 
                 if(!isAppointmentIDValid) {
                     System.out.println("Enter the appointment ID:");
                     appointmentID = reader.readLine();
-                     query = "Select * from appointment where id = '" + appointmentID + "';";
+                     query = "Select * from appointment where id = '" + appointmentID + "' AND ispatientattended = '0';";
                     resultSet = statement.executeQuery(query);
-                    if (resultSet.next())
+                    if (resultSet.next()) {
                         isAppointmentIDValid = true;
+                        String date = resultSet.getString("dateofappointment");
+                        dateOfAppointment = LocalDate.parse(date);
+                        patientID = resultSet.getInt("patient");
+                    }
+                    else
+                    {
+                        query = "Select * from appointment where id = '" + appointmentID + "';";
+                        resultSet = statement.executeQuery(query);
+                        if (resultSet.next())
+                        {
+                            //appointment id exists but some doctor has already treated the patient.
+                        }
+                        else
+                        {
+                            System.out.println("Patient appointment is already marked done.Cannot reassign!");
+                            return;
+                        }
+                    }
                 }
 
                  if(!isDoctorIDValid) {
                      System.out.println("Enter the doctor ID:");
                      doctorID = reader.readLine();
+
                      query = "Select * from doctor  where id = '" + doctorID + "';";
+
                      resultSet  = statement.executeQuery(query);
-                     if (resultSet.next())
+                     if (resultSet.next()) {
                          isDoctorIDValid = true;
+                         departmentID = resultSet.getInt("departmentID");
+
+                         query = "select code from department where id="+departmentID+";";
+
+                         resultSet = statement.executeQuery(query);
+                         if(resultSet.next())
+                             departmentCode = resultSet.getString("code");
+
+                         query = "select tokennumber from appointment where doctor = '"+doctorID+"' AND dateofappointment = '"+dateOfAppointment+"' order by tokennumber desc;";
+
+                         resultSet = statement.executeQuery(query);
+                         if(resultSet.next()) {
+                             tokenNumber = resultSet.getInt(1);
+                         }
+
+                     }
                  }
 
                  if(!isDoctorIDValid)
@@ -146,14 +260,40 @@ public class Admin {
             resultSet = statement.executeQuery(query);
             if(resultSet.next())
             {
+                String isCritical = resultSet.getString("iscritical");
+                String symptomps = resultSet.getString("symptoms");
+                String location =  resultSet.getString("location");
 
-                query = "update appointment set doctor = '"+doctorID+"' where id = '"+appointmentID+"';";
-                int rowCount =  statement.executeUpdate(query);
+                query = "delete from appointment where id ='"+appointmentID+"';";
+                statement.executeUpdate(query);
 
-                if(rowCount>=1)
+                //APPOINTMENT_ID is a place holder and will be removed by meaningfulID
+                query = "insert into appointment values ('APPOINTMENT_ID',NULL,'"+patientID+"','"+doctorID+"','"+dateOfAppointment+"','"+(tokenNumber+1)+"','"+isCritical+"','"+symptomps+"','"+location+"','0','"+departmentID+"');";
+
+                int rowCount = statement.executeUpdate(query);
+                if(rowCount>0)
                 {
-                    System.out.println("doctor with id:"+doctorID+" has been assigned to patient with appointment id:"+appointmentID);
+                    int serialNumber = -1;
+
+                    query = "select sno from appointment  where doctor = '"+doctorID+"' AND dateofappointment = '"+dateOfAppointment+"' AND ispatientattended='0'  AND patient = '"+patientID+"' AND tokennumber = "+(tokenNumber+1)+";";
+
+                    resultSet = statement.executeQuery(query);
+
+                    if (resultSet.next()) {
+                        serialNumber = resultSet.getInt("sno");
+                    } else {
+                        // throw an exception from here
+                    }
+                    appointmentID = departmentCode + serialNumber;
+
+                    query = "UPDATE appointment SET id = '"+appointmentID+"' WHERE SNO="+serialNumber+"; ";
+
+                    int j=statement.executeUpdate(query);
+                    if(j==1) {
+                        System.out.println("doctor with id:"+doctorID+" has been assigned to patient with appointment id:"+appointmentID);
+                    }
                 }
+
             }
             else
             {

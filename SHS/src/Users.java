@@ -1,6 +1,15 @@
 import java.util.Date;
 
 public class Users {
+    private String name;
+    private String dateOfBirth;
+    private int age;
+    private String gender;
+    private long phoneNumber;
+    private String password;
+    private String email;
+    private String address;
+
     public String getName() {
         return name;
     }
@@ -64,15 +73,6 @@ public class Users {
     public void setAddress(String address) {
         this.address = address;
     }
-
-    private String name;
-    private String dateOfBirth;
-    private int age;
-    private String gender;
-    private long phoneNumber;
-    private String password;
-    private String email;
-    private String address;
 
 }
  //  create table Patient(name varchar(20),dateOfBirth varchar(15), age INT, gender varchar(10),phoneNumber varchar(15),password varchar(30),email varchar(30),address varchar(100));

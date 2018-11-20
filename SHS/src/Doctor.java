@@ -1,3 +1,5 @@
+import Middleware.Logger;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -6,7 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
 
-public class Doctor {
+public class Doctor extends Users{
 
     private String name;
     private String dateOfBirth;
@@ -20,6 +22,8 @@ public class Doctor {
     private String address;
     private LocalTime inTimeOPD;
     private LocalTime outTimeOPD;
+    private LocalTime inTimeLocal;
+    private LocalTime outTimeLocal;
     private Boolean isSurgeon;
     private String specialisation;
     private String designation;
@@ -65,6 +69,22 @@ public class Doctor {
         this.outTimeOPD = outTimeOPD;
     }
 
+    public LocalTime getInTimeLocal() {
+        return inTimeLocal;
+    }
+
+    public void setInTimeLocal(LocalTime inTimeLocal) {
+        this.inTimeLocal = inTimeLocal;
+    }
+
+    public LocalTime getOutTimeLocal() {
+        return outTimeLocal;
+    }
+
+    public void setOutTimeLocal(LocalTime outTimeLocal) {
+        this.outTimeLocal = outTimeLocal;
+    }
+
     public Boolean getSurgeon() {
         return isSurgeon;
     }
@@ -96,13 +116,14 @@ public class Doctor {
         this.departmentID = departmentID;
     }
 
-    //not in original
+
     enum DOCTOR_TYPE {JUNIOR_DOCTOR,SENIOR_DOCTOR,SPECIALIST,SENIOR_SPECIALIST}
+    enum LOCATION {OPD,LOCAL};
 
     Doctor() {
     }
 
-    public Doctor(String name, String dateOfBirth, Integer age, String gender, Long phoneNumber, String email, String password, int doctorID, String[] schedule, String address, LocalTime inTimeOPD, LocalTime outTimeOPD, Boolean isSurgeon, String specialisation,String designation,int departmentID) {
+    public Doctor(String name, String dateOfBirth, Integer age, String gender, Long phoneNumber, String email, String password, int doctorID, String[] schedule, String address, LocalTime inTimeOPD, LocalTime outTimeOPD, Boolean isSurgeon, String specialisation,String designation,int departmentID,LocalTime inTimeLocal,LocalTime outTimeLocal) {
         this.name = name;
         this.dateOfBirth = dateOfBirth;
         this.age = age;
@@ -119,6 +140,8 @@ public class Doctor {
         this.specialisation = specialisation;
         this.designation = designation;
         this.departmentID = departmentID;
+        this.inTimeLocal = inTimeLocal;
+        this.outTimeLocal = outTimeLocal;
     }
 
     //Create a new Record for the patient
@@ -144,7 +167,7 @@ public class Doctor {
             Statement statement = SHS.connection.createStatement();
 
 
-
+//global appointment ID and patient ID
                 String query = "Select * from patient where id ='"+patientID+"';";
                 ResultSet resultSet = statement.executeQuery(query);
                 if(!resultSet.next())
@@ -263,6 +286,8 @@ public class Doctor {
                     this.isSurgeon=queryResult.getBoolean(14);
                     this.designation=queryResult.getString(15);
                     this.departmentID=queryResult.getInt(16);
+                    this.inTimeLocal=queryResult.getTime(17).toLocalTime();
+                    this.outTimeLocal=queryResult.getTime(18).toLocalTime();
                     return true;
                 } else {
                     System.out.println("Wrong username or password!");
@@ -349,24 +374,60 @@ public class Doctor {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             Statement statement = SHS.connection.createStatement();
             ResultSet resultSet;
-            String patientID="",query="";
+            String patientID="",appointmentID="",query="";
+
+            LOCATION currentLocation = LOCATION.OPD;
+            if((LocalTime.now().compareTo(inTimeOPD)>0||LocalTime.now().equals(inTimeOPD))&&(LocalTime.now().compareTo(outTimeOPD)<0||LocalTime.now().equals(outTimeOPD)))
+            {
+                currentLocation = LOCATION.OPD;
+                System.out.println("Currently treating OPD patients");
+            }
+            else if((LocalTime.now().compareTo(inTimeLocal)>0||LocalTime.now().equals(inTimeLocal))&&(LocalTime.now().compareTo(outTimeLocal)<0||LocalTime.now().equals(outTimeLocal)))
+            {
+                currentLocation = LOCATION.LOCAL;
+                System.out.println("Currently treating LOCAL patients");
+            }
+            else {
+                System.out.println("Time to go home. OPD and LOCAL timings are over.");
+                return;
+            }
+
 
             System.out.println("Today's remaining appointments list by token number:\n");
-            getListOfAssignedPatient();
+            getListOfAssignedPatient(currentLocation);
 
-            query = "Select * from appointment where dateofappointment ='"+LocalDate.now()+"' AND ispatientattended = '0' order by tokennumber;";
+            query = "Select count(*) from appointment where dateofappointment ='"+LocalDate.now()+"'AND doctor='"+doctorID+"' AND ispatientattended = '0' AND iscritical='T' order by tokennumber;";
             resultSet = statement.executeQuery(query);
+            resultSet.next();
+            int countOfCriticalPatients = resultSet.getInt(1);
+            if(countOfCriticalPatients>1)
+            {
+
+
+                query = "Select * from appointment where dateofappointment ='"+LocalDate.now()+"'AND doctor='"+doctorID+"' AND ispatientattended = '0' AND iscritical='T' order by tokennumber;";
+                resultSet = statement.executeQuery(query);
+
+            }
+            else
+            {
+
+                query = "Select * from appointment where dateofappointment ='"+LocalDate.now()+"'AND doctor='"+doctorID+"' AND ispatientattended = '0' AND iscritical='F' order by tokennumber;";
+                resultSet = statement.executeQuery(query);
+
+            }
+
             if(resultSet.next())
             {
                 patientID = resultSet.getString("patient");
+                appointmentID = resultSet.getString("id");
 
-
-                System.out.println("\nTreating patient,\npatient ID:"+patientID+"\nappointment ID:"+resultSet.getString("id"));
+                System.out.println("\nTreating patient,\npatient ID:"+patientID+"\nappointment ID:"+resultSet.getString("id")+"\nis critical:"+resultSet.getString("iscritical"));
                 System.out.println("\nDo you want to see this patient's history?\n");
                 String response = reader.readLine();
                 if (response.equalsIgnoreCase("Yes") || response.equalsIgnoreCase("Y"))
                     viewPatientHistory();
 
+                System.out.println("\nTreating patient,\npatient ID:"+patientID+"\nappointment ID:"+resultSet.getString("id"));
 
                 createRecord();
 
@@ -394,6 +455,7 @@ public class Doctor {
 
                     int doctorBeingReferredTo;
                     int departmentBeingReferredTo;
+                    statement.close();
                     switch (doctor_type)
                     {
                         case JUNIOR_DOCTOR:
@@ -405,7 +467,6 @@ public class Doctor {
                         case SENIOR_DOCTOR:
                             operatingDoctor = new SeniorResidentDoctor();
                             System.out.println("Enter the id of the doctor to which you want to refer this patient");
-                            System.out.println(doctor_type.toString());
                             doctorBeingReferredTo = Integer.parseInt(reader.readLine());
                             ((SeniorResidentDoctor) operatingDoctor).referPatient(doctorID,doctorBeingReferredTo,patientID);
                             break;
@@ -421,7 +482,7 @@ public class Doctor {
                             {
                                 System.out.println("Enter the department ID:");
                                 departmentBeingReferredTo = Integer.parseInt(reader.readLine());
-                                ((Specialist) operatingDoctor).referToAnotherDepartment(departmentBeingReferredTo,doctorBeingReferredTo,patientID);
+                                ((Specialist) operatingDoctor).referToAnotherDepartment(departmentBeingReferredTo,doctorID,doctorBeingReferredTo,patientID);
                             }
                             else if(choice == 1)
                             {
@@ -438,13 +499,14 @@ public class Doctor {
                             doctorBeingReferredTo = Integer.parseInt(reader.readLine());
                             System.out.println("Enter the department ID:");
                             departmentBeingReferredTo = Integer.parseInt(reader.readLine());
-                            ((SeniorSpecialist) operatingDoctor).referToAnotherDepartment(departmentBeingReferredTo,doctorBeingReferredTo,patientID);
+                            ((SeniorSpecialist) operatingDoctor).referToAnotherDepartment(departmentBeingReferredTo,doctorID,doctorBeingReferredTo,patientID);
                             break;
                     }
 
                 }
                 //after everything is done patient is marked done.
-                query = "update appointment set ispatientattended = '1' where patient = '"+patientID+"' AND dateofappointment ='"+LocalDate.now()+"';";
+                statement = SHS.connection.createStatement();
+                query = "update appointment set ispatientattended = '1' where patient = '"+patientID+"' AND dateofappointment ='"+LocalDate.now()+"' AND id = '"+appointmentID+"';";
                 int rowCount = statement.executeUpdate(query);
 
             }
@@ -465,11 +527,11 @@ public class Doctor {
 
     //gets the list of patients assigned to the doctor
     //select only those patient whose appointment record has the doctor ID and is assigned for today and has not been attended yet
-    public void getListOfAssignedPatient() {
+    public void getListOfAssignedPatient(LOCATION location) {
 
         try {
             Statement statement = SHS.connection.createStatement();
-            String query = "select patient.name,appointment.id,appointment.patient,appointment.tokennumber from patient inner join appointment on appointment.patient=patient.id where doctor = '"+doctorID+"' AND dateofappointment = '"+LocalDate.now()+"' AND ispatientattended='0' order by tokennumber;";
+            String query = "select patient.name,appointment.id,appointment.patient,appointment.tokennumber,appointment.location,appointment.iscritical from patient inner join appointment on appointment.patient=patient.id where doctor = '"+doctorID+"' AND dateofappointment = '"+LocalDate.now()+"' AND ispatientattended='0' AND location='"+location+"' AND iscritical = 'T' order by tokennumber;";
             ResultSet resultSet = statement.executeQuery(query);
             for(int i=1;resultSet.next();i++)
             {
@@ -477,14 +539,28 @@ public class Doctor {
                 System.out.println(String.format("%30s","-"+i+"-"));
                 System.out.println(String.format("%-40s", "patient ID:") + String.format("%20s", resultSet.getString("patient")));
                 System.out.println(String.format("%-40s", "patient name:") + String.format("%20s", resultSet.getString("name")));
-                System.out.println(String.format("%-40s", "appointment ID:") + String.format("%20s", resultSet.getInt("id")));
+                System.out.println(String.format("%-40s", "appointment ID:") + String.format("%20s", resultSet.getString("id")));
                 System.out.println(String.format("%-40s", "token number:") + String.format("%20s", resultSet.getInt("tokennumber")));
+                System.out.println(String.format("%-40s", "is critical:") + String.format("%20s", resultSet.getString("iscritical")));
             }
 
+            query = "select patient.name,appointment.id,appointment.patient,appointment.tokennumber,appointment.location,appointment.iscritical from patient inner join appointment on appointment.patient=patient.id where doctor = '"+doctorID+"' AND dateofappointment = '"+LocalDate.now()+"' AND ispatientattended='0' AND location='"+location+"' AND iscritical = 'F' order by tokennumber;";
+            resultSet = statement.executeQuery(query);
+            for(int i=1;resultSet.next();i++)
+            {
+
+                System.out.println(String.format("%30s","-"+i+"-"));
+                System.out.println(String.format("%-40s", "patient ID:") + String.format("%20s", resultSet.getString("patient")));
+                System.out.println(String.format("%-40s", "patient name:") + String.format("%20s", resultSet.getString("name")));
+                System.out.println(String.format("%-40s", "appointment ID:") + String.format("%20s", resultSet.getString("id")));
+                System.out.println(String.format("%-40s", "token number:") + String.format("%20s", resultSet.getInt("tokennumber")));
+                System.out.println(String.format("%-40s", "is critical:") + String.format("%20s", resultSet.getString("iscritical")));
+            }
         }
         catch (SQLException exception)
         {
             System.out.println("SQLException :" +exception.getMessage());
+            Logger.log(exception.getMessage());
         }
     }
     //sort the list of patients assigned to doctor by IDs
@@ -492,13 +568,13 @@ public class Doctor {
         try {
             Statement statement = SHS.connection.createStatement();
             String query = "select patient.name,appointment.id,appointment.patient,appointment.tokennumber from patient inner join appointment on appointment.patient=patient.id where doctor = '"+doctorID+"' AND dateofappointment >= '"+LocalDate.now()+"'  AND ispatientattended='0' order by appointment.patient;";
+
             ResultSet resultSet = statement.executeQuery(query);
             for(int i=1;resultSet.next();i++)
             {
-
                 System.out.println(String.format("%30s","-"+i+"-"));
                 System.out.println(String.format("%-40s", "patient ID:") + String.format("%20s", resultSet.getString("patient")));
-                System.out.println(String.format("%-40s", "appointment ID:") + String.format("%20s", resultSet.getInt("id")));
+                System.out.println(String.format("%-40s", "appointment ID:") + String.format("%20s", resultSet.getString("id")));
                 System.out.println(String.format("%-40s", "patient name:") + String.format("%20s", resultSet.getString("name")));
                 System.out.println(String.format("%-40s", "token number:") + String.format("%20s", resultSet.getInt("tokennumber")));
             }
@@ -524,7 +600,7 @@ public class Doctor {
                 System.out.println(String.format("%30s","-"+i+"-"));
                 System.out.println(String.format("%-40s", "patient ID:") + String.format("%20s", resultSet.getString("patient")));
                 System.out.println(String.format("%-40s", "patient name:") + String.format("%20s", resultSet.getString("name")));
-                System.out.println(String.format("%-40s", "appointment ID:") + String.format("%20s", resultSet.getInt("id")));
+                System.out.println(String.format("%-40s", "appointment ID:") + String.format("%20s", resultSet.getString("id")));
                 System.out.println(String.format("%-40s", "token number:") + String.format("%20s", resultSet.getInt("tokennumber")));
             }
 

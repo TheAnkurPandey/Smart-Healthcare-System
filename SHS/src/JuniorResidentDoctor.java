@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 
+
 public class JuniorResidentDoctor extends Doctor implements Delegation {
     @Override
     public void referPatient(int doctorsID, int referredDoctorsID, String patientID) {
@@ -35,16 +36,42 @@ public class JuniorResidentDoctor extends Doctor implements Delegation {
                      query = "select * from appointment  where doctor = '"+doctorsID+"' AND dateofappointment = '"+LocalDate.now()+"' AND ispatientattended='0'  AND patient = '"+patientID+"';";
                      resultSet = statement.executeQuery(query);
                      resultSet.next();
-                     byte isPatientAttended = 0;
-                     query = "insert into appointment values (NULL,'"+resultSet.getString(2)+"','"+referredDoctorsID+"','"
-                             +resultSet.getDate(4)+"','"+(tokennumber+1)+"','"+resultSet.getString(6)+"','"
-                             +resultSet.getString(7)+"','"+ resultSet.getString(8)+"','"+isPatientAttended+"','"
-                             +resultSet.getInt(10)+"');";
-                    int rowCount = statement.executeUpdate(query);
-                    if(rowCount>0)
-                        System.out.println("Referral Completed successfully");
-                System.out.println("patient with id:" + patientID + " is successfully referred to doctor with id:" + referredDoctorsID);
-            }
+
+                String isCritical = resultSet.getString("iscritical");
+                String symptomps = resultSet.getString("symptoms");
+                String location =  resultSet.getString("location");
+                int department_ID = resultSet.getInt("department");
+
+                //insert into appointment values ('ORTHO1234',NULL,'1','122','2018-11-19',1,'Yes','Fever,Body ache,Restlessness','OPD','0','1');
+                //APPOINTMENT_ID is a place holder and will be removed by meaningfulID
+                query = "insert into appointment values ('APPOINTMENT_ID',NULL,'"+patientID+"','"+referredDoctorsID+"','"+LocalDate.now()+"','"+(tokennumber+1)+"','"+isCritical+"','"+symptomps+"','"+location+"','0','"+department_ID+"');";
+                int rowCount = statement.executeUpdate(query);
+                if(rowCount>0)
+                {
+                    query = "select code from department where id ="+department_ID+";";
+                    resultSet = statement.executeQuery(query);
+                    resultSet.next();
+                    String departmentCode = resultSet.getString("code");
+                    String appointmentID = "";
+                    int serialNumber = -1;
+                    query = "select sno from appointment  where doctor = '"+referredDoctorsID+"' AND dateofappointment = '"+LocalDate.now()+"' AND ispatientattended='0'  AND patient = '"+patientID+"' AND tokennumber = "+(tokennumber+1)+";";
+                    resultSet = statement.executeQuery(query);
+
+                        if (resultSet.next()) {
+                            serialNumber = resultSet.getInt("sno");
+                        } else {
+                            // throw an exception from here
+                        }
+                        appointmentID = departmentCode + serialNumber;
+                        query = "UPDATE appointment SET id = '"+appointmentID+"' WHERE SNO="+serialNumber+"; ";
+                        int j=statement.executeUpdate(query);
+                        if(j==1) {
+                            System.out.println("Referral Completed successfully");
+                            System.out.println("patient with id:" + patientID + " is successfully referred to Junior doctor with id:" + referredDoctorsID);
+
+                        }
+                }
+                }
             else
             {
                 System.out.println("The doctor id of the doctor being referred to is invalid!");
